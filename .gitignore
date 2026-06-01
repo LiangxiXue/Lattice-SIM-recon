@@ -1,0 +1,7 @@
+Lattice_SIM_Reconstruction_Program_matlab/lattice_sim_core/testpat_lattice_simulation_output/
+Lattice_SIM_Reconstruction_Program_matlab/lattice_sim_core/tests/results/
+
+*.asv
+*.m~
+Thumbs.db
+.DS_Store
