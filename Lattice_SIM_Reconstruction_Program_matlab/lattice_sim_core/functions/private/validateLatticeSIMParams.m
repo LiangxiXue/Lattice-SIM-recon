@@ -11,6 +11,14 @@ end
 if params.wiener < 0
     error('LatticeSIM:InvalidWiener', 'Wiener parameter must be non-negative.');
 end
+if ~any(strcmp(char(params.carrierSearchMode), {'axis-aligned', 'unconstrained'}))
+    error('LatticeSIM:InvalidCarrierSearchMode', ...
+        'Carrier search mode must be "axis-aligned" or "unconstrained".');
+end
+if params.carrierAxisToleranceDeg <= 0 || params.carrierAxisToleranceDeg > 90
+    error('LatticeSIM:InvalidCarrierAxisTolerance', ...
+        'Carrier axis tolerance must be in the range (0, 90] degrees.');
+end
 if requirePhysical
     required = {'pixelSizeNm', 'emissionWavelengthNm', 'NA'};
     for idx = 1:numel(required)

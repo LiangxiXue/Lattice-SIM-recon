@@ -26,10 +26,10 @@ assert(isequal(size(truth.noiseFreeStack), [48, 52, 5]));
 assert(isequal(size(truth.otf), [48, 52]));
 assert(isequal(truth.phasePairs, [
     0,       0
-    0,       2*pi/3
-    0,       4*pi/3
     2*pi/3, 0
-    4*pi/3, 2*pi/3
+    4*pi/3, 0
+    0,       2*pi/3
+    2*pi/3, 4*pi/3
 ]));
 assert(norm(truth.phaseErrors(:)) > 0);
 assert(norm(rawStack(:) - truth.noiseFreeStack(:)) > 0);

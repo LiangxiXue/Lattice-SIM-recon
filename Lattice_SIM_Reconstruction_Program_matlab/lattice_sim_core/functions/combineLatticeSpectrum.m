@@ -19,7 +19,7 @@ for idx = 1:size(components, 1)
     component = components{idx, 1};
     carrierRad = components{idx, 2};
     carrierPixel = components{idx, 3};
-    modulation = components{idx, 4};
+    sidebandAmplitude = components{idx, 4} / 2;
     phaseRamp = exp(-1i * (carrierRad(1) * x + carrierRad(2) * y));
     centered = component .* phaseRamp;
     freq = fft2c(centered);
@@ -28,7 +28,7 @@ for idx = 1:size(components, 1)
     centerCol = floor(w/2) + 1;
     phaseReference = freq(centerRow, centerCol) / (freq0(centerRow, centerCol) + eps);
     freq = freq .* exp(-1i * angle(phaseReference));
-    num = num + freq .* conj(shiftedOtf) ./ modulation;
+    num = num + freq .* conj(shiftedOtf) ./ sidebandAmplitude;
     den = den + abs(shiftedOtf).^2;
 end
 

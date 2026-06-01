@@ -33,7 +33,7 @@ else
     bands.CtMinus = amp * base .* exp(-1i * phaseT);
 end
 
-W = syntheticLatticePhaseMatrix();
+W = latticePhaseMatrix();
 componentStack = cat(3, bands.C0, bands.CsPlus, bands.CsMinus, ...
     bands.CtPlus, bands.CtMinus);
 rawStack = zeros(h, w, 5);
@@ -45,21 +45,4 @@ for frameIdx = 1:5
     rawStack(:, :, frameIdx) = real(frame);
 end
 
-function W = syntheticLatticePhaseMatrix()
-phasePairs = [
-    0,       0
-    0,       2*pi/3
-    0,       4*pi/3
-    2*pi/3,  0
-    4*pi/3,  2*pi/3
-];
-
-W = zeros(5, 5);
-for idx = 1:5
-    phiS = phasePairs(idx, 1);
-    phiT = phasePairs(idx, 2);
-    W(idx, :) = [1, exp(1i * phiS), exp(-1i * phiS), ...
-        exp(1i * phiT), exp(-1i * phiT)];
-end
-end
 end

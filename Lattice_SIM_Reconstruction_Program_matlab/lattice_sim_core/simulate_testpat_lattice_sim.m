@@ -55,6 +55,8 @@ reconParams = defaultLatticeSIMParams();
 reconParams.pixelSizeNm = simParams.pixelSizeNm;
 reconParams.emissionWavelengthNm = simParams.emissionWavelengthNm;
 reconParams.NA = simParams.NA;
+reconParams.modulationS = simParams.modulationS;
+reconParams.modulationT = simParams.modulationT;
 reconParams.normalizeFrames = true;
 
 result = reconstructLatticeSIM(rawStack, reconParams);

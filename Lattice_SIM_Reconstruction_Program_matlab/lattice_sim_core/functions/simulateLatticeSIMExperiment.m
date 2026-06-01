@@ -25,13 +25,7 @@ end
 [h, w] = size(objectImage);
 [x, y] = meshgrid(0:w-1, 0:h-1);
 
-phasePairs = [
-    0,       0
-    0,       2*pi/3
-    0,       4*pi/3
-    2*pi/3, 0
-    4*pi/3, 2*pi/3
-];
+phasePairs = latticePhasePairs();
 
 phaseErrors = simParams.phaseErrorStd .* randn(5, 2);
 illumination = zeros(h, w, 5);

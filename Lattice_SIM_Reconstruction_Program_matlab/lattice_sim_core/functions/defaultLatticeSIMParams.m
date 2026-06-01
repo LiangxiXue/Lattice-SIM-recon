@@ -19,6 +19,8 @@ params.normalizeFrames = true;
 params.carrierMinRadiusPixels = [];
 params.carrierPeakWindow = 1;
 params.carrierWeakPeakRatio = 4;
+params.carrierSearchMode = "axis-aligned";
+params.carrierAxisToleranceDeg = 15;
 
 if ~isstruct(userParams)
     error('LatticeSIM:InvalidParams', 'Parameters must be a struct.');

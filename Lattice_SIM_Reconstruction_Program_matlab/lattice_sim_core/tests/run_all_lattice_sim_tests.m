@@ -23,6 +23,7 @@ test_separateLatticeBands();
 test_expansionFactorToCarrierPixels();
 test_simulateLatticeSIMExperiment();
 test_estimateLatticeCarrier();
+test_combineLatticeSpectrum_modulation();
 test_reconstructLatticeSIM_smoke();
 test_saveLatticeSIMResult();
 

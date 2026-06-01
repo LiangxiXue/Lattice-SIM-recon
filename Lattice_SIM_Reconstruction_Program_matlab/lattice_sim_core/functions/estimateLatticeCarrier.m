@@ -12,10 +12,22 @@ else
     minRadius = params.carrierMinRadiusPixels;
 end
 
-[ksPlus, mapSPlus, ratioSPlus] = findCarrierPeak(bands.CsPlus, minRadius, params.carrierPeakWindow);
-[ksMinus, mapSMinus, ratioSMinus] = findCarrierPeak(bands.CsMinus, minRadius, params.carrierPeakWindow);
-[ktPlus, mapTPlus, ratioTPlus] = findCarrierPeak(bands.CtPlus, minRadius, params.carrierPeakWindow);
-[ktMinus, mapTMinus, ratioTMinus] = findCarrierPeak(bands.CtMinus, minRadius, params.carrierPeakWindow);
+if strcmp(char(params.carrierSearchMode), 'axis-aligned')
+    sAxis = 'x';
+    tAxis = 'y';
+else
+    sAxis = 'none';
+    tAxis = 'none';
+end
+
+[ksPlus, mapSPlus, ratioSPlus] = findCarrierPeak(bands.CsPlus, minRadius, ...
+    params.carrierPeakWindow, sAxis, params.carrierAxisToleranceDeg);
+[ksMinus, mapSMinus, ratioSMinus] = findCarrierPeak(bands.CsMinus, minRadius, ...
+    params.carrierPeakWindow, sAxis, params.carrierAxisToleranceDeg);
+[ktPlus, mapTPlus, ratioTPlus] = findCarrierPeak(bands.CtPlus, minRadius, ...
+    params.carrierPeakWindow, tAxis, params.carrierAxisToleranceDeg);
+[ktMinus, mapTMinus, ratioTMinus] = findCarrierPeak(bands.CtMinus, minRadius, ...
+    params.carrierPeakWindow, tAxis, params.carrierAxisToleranceDeg);
 
 ks = (ksPlus - ksMinus) / 2;
 kt = (ktPlus - ktMinus) / 2;
@@ -44,6 +56,7 @@ diagnostics.carrierMagnitudeT = norm(kt);
 diagnostics.carrierAngleDeg = [angleS, angleT];
 diagnostics.orthogonalityErrorDeg = orthogonalityErrorDeg;
 diagnostics.carrierSearchMaps = carriers.searchMaps;
+diagnostics.carrierSearchMode = params.carrierSearchMode;
 diagnostics.warnings = {};
 
 if carriers.peakStrengthS < params.carrierWeakPeakRatio
@@ -57,13 +70,14 @@ if orthogonalityErrorDeg > 10
 end
 end
 
-function [carrierPixel, searchMap, peakRatio] = findCarrierPeak(component, minRadius, peakWindow)
+function [carrierPixel, searchMap, peakRatio] = findCarrierPeak(component, minRadius, peakWindow, axisName, axisToleranceDeg)
 F = abs(fftshift(fft2(ifftshift(component))));
 [h, w] = size(F);
 [xGrid, yGrid] = meshgrid((1:w) - floor(w/2) - 1, (1:h) - floor(h/2) - 1);
 radius = hypot(xGrid, yGrid);
 searchMap = F;
 searchMap(radius < minRadius) = 0;
+searchMap(~axisSearchMask(xGrid, yGrid, axisName, axisToleranceDeg)) = 0;
 searchMap(~isfinite(searchMap)) = 0;
 
 [peakValue, linearIdx] = max(searchMap(:));
@@ -88,6 +102,22 @@ localMap = searchMap(rowRange, colRange);
 weightSum = sum(localMap(:));
 carrierPixel = [sum(localX(:) .* localMap(:)) / weightSum, ...
     sum(localY(:) .* localMap(:)) / weightSum];
+end
+
+function mask = axisSearchMask(xGrid, yGrid, axisName, axisToleranceDeg)
+if strcmp(axisName, 'none')
+    mask = true(size(xGrid));
+    return;
+end
+
+angleFromXAxis = atan2d(abs(yGrid), abs(xGrid));
+if strcmp(axisName, 'x')
+    mask = angleFromXAxis <= axisToleranceDeg;
+elseif strcmp(axisName, 'y')
+    mask = abs(angleFromXAxis - 90) <= axisToleranceDeg;
+else
+    error('LatticeSIM:InvalidCarrierSearchAxis', 'Unsupported carrier search axis: %s', axisName);
+end
 end
 
 function angleDeg = wrapTo180Local(angleDeg)
