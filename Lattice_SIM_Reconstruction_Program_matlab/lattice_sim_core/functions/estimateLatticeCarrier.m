@@ -19,15 +19,16 @@ else
     sAxis = 'none';
     tAxis = 'none';
 end
+bandDomain = getBandDomain(bands);
 
 [ksPlus, mapSPlus, ratioSPlus] = findCarrierPeak(bands.CsPlus, minRadius, ...
-    params.carrierPeakWindow, sAxis, params.carrierAxisToleranceDeg);
+    params.carrierPeakWindow, sAxis, params.carrierAxisToleranceDeg, bandDomain);
 [ksMinus, mapSMinus, ratioSMinus] = findCarrierPeak(bands.CsMinus, minRadius, ...
-    params.carrierPeakWindow, sAxis, params.carrierAxisToleranceDeg);
+    params.carrierPeakWindow, sAxis, params.carrierAxisToleranceDeg, bandDomain);
 [ktPlus, mapTPlus, ratioTPlus] = findCarrierPeak(bands.CtPlus, minRadius, ...
-    params.carrierPeakWindow, tAxis, params.carrierAxisToleranceDeg);
+    params.carrierPeakWindow, tAxis, params.carrierAxisToleranceDeg, bandDomain);
 [ktMinus, mapTMinus, ratioTMinus] = findCarrierPeak(bands.CtMinus, minRadius, ...
-    params.carrierPeakWindow, tAxis, params.carrierAxisToleranceDeg);
+    params.carrierPeakWindow, tAxis, params.carrierAxisToleranceDeg, bandDomain);
 
 ks = (ksPlus - ksMinus) / 2;
 kt = (ktPlus - ktMinus) / 2;
@@ -57,6 +58,7 @@ diagnostics.carrierAngleDeg = [angleS, angleT];
 diagnostics.orthogonalityErrorDeg = orthogonalityErrorDeg;
 diagnostics.carrierSearchMaps = carriers.searchMaps;
 diagnostics.carrierSearchMode = params.carrierSearchMode;
+diagnostics.bandDomain = bandDomain;
 diagnostics.warnings = {};
 
 if carriers.peakStrengthS < params.carrierWeakPeakRatio
@@ -70,8 +72,20 @@ if orthogonalityErrorDeg > 10
 end
 end
 
-function [carrierPixel, searchMap, peakRatio] = findCarrierPeak(component, minRadius, peakWindow, axisName, axisToleranceDeg)
-F = abs(fftshift(fft2(ifftshift(component))));
+function domain = getBandDomain(bands)
+if isfield(bands, 'domain')
+    domain = char(bands.domain);
+else
+    domain = 'space';
+end
+end
+
+function [carrierPixel, searchMap, peakRatio] = findCarrierPeak(component, minRadius, peakWindow, axisName, axisToleranceDeg, domain)
+if strcmp(domain, 'frequency')
+    F = abs(component);
+else
+    F = abs(fftshift(fft2(ifftshift(component))));
+end
 [h, w] = size(F);
 [xGrid, yGrid] = meshgrid((1:w) - floor(w/2) - 1, (1:h) - floor(h/2) - 1);
 radius = hypot(xGrid, yGrid);
