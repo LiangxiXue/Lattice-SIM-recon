@@ -8,7 +8,8 @@ function summary = run_component_separation_debug()
 % component spectra.
 
 debugDir = fileparts(mfilename('fullpath'));
-coreDir = fileparts(debugDir);
+experimentsDir = fileparts(debugDir);
+coreDir = fileparts(experimentsDir);
 functionsDir = fullfile(coreDir, 'functions');
 addpath(functionsDir);
 
@@ -84,7 +85,7 @@ caseSpec.showSpectrum = showSpectrum;
 end
 
 function [objectImage, simParams] = loadTestpatSimulationInput(coreDir)
-inputPath = fullfile(coreDir, 'testpat.tiff');
+inputPath = fullfile(coreDir, 'simulation_tests', 'testpat.tiff');
 if exist(inputPath, 'file') ~= 2
     error('LatticeSIM:MissingInputImage', 'Expected test image not found: %s', inputPath);
 end

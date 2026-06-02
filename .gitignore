@@ -1,4 +1,5 @@
-Lattice_SIM_Reconstruction_Program_matlab/lattice_sim_core/testpat_lattice_simulation_output/
+Lattice_SIM_Reconstruction_Program_matlab/lattice_sim_core/simulation_tests/testpat_lattice_simulation_output/
+Lattice_SIM_Reconstruction_Program_matlab/lattice_sim_core/configurable_real_data_output/
 Lattice_SIM_Reconstruction_Program_matlab/lattice_sim_core/tests/results/
 
 *.asv

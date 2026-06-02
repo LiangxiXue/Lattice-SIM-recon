@@ -1,7 +1,8 @@
 %COMPARE_LATTICE_DIRECT_AND_CURRENT_SPECTRUM Save two Lattice-SIM spectrum comparison images.
 
 scriptDir = fileparts(mfilename('fullpath'));
-coreDir = fileparts(scriptDir);
+experimentsDir = fileparts(scriptDir);
+coreDir = fileparts(experimentsDir);
 functionsDir = fullfile(coreDir, 'functions');
 addpath(functionsDir);
 

@@ -19,7 +19,7 @@ imwrite(toUnitImage(result.WF), wfPath, 'tif');
 imwrite(toUnitImage(result.SIM), simPath, 'tif');
 
 resultMatPath = fullfile(diagnosticsDir, 'result.mat');
-save(resultMatPath, 'result');
+save(resultMatPath, 'result', '-v7.3');
 
 saved.widefieldPath = wfPath;
 saved.simPath = simPath;

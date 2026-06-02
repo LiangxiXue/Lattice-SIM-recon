@@ -15,12 +15,13 @@
 clear;
 clc;
 
-rootDir = fileparts(mfilename('fullpath'));
-addpath(fullfile(rootDir, 'functions'));
+simulationDir = fileparts(mfilename('fullpath'));
+coreDir = fileparts(simulationDir);
+addpath(fullfile(coreDir, 'functions'));
 
 %% Editable simulation and reconstruction parameters.
-inputPath = fullfile(rootDir, 'testpat.tiff');
-outputDir = fullfile(rootDir, 'testpat_lattice_simulation_output');
+inputPath = fullfile(simulationDir, 'testpat.tiff');
+outputDir = fullfile(simulationDir, 'testpat_lattice_simulation_output');
 cropSize = 256;
 
 % Simulated carrier frequency size and directions.

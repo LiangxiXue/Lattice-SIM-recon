@@ -3,7 +3,7 @@ function test_simulate_testpat_configurable_acquisition()
 
 testDir = fileparts(mfilename('fullpath'));
 coreDir = fileparts(testDir);
-scriptPath = fullfile(coreDir, 'simulate_testpat_lattice_sim.m');
+scriptPath = fullfile(coreDir, 'simulation_tests', 'simulate_testpat_lattice_sim.m');
 scriptText = fileread(scriptPath);
 
 configStart = strfind(scriptText, '%% Editable simulation and reconstruction parameters.');
@@ -13,7 +13,7 @@ assert(~isempty(firstRead));
 assert(configStart(1) < firstRead(1));
 
 editableBlock = scriptText(configStart(1):firstRead(1));
-assert(contains(editableBlock, 'cropSize = 512;'));
+assert(contains(editableBlock, 'cropSize = 256;'));
 assert(contains(editableBlock, 'frequencyMode = "expansion-factor-angle";'));
 assert(contains(editableBlock, 'expansionFactor = 1.6;'));
 assert(contains(editableBlock, 'carrierAngleTarget = "s";'));
