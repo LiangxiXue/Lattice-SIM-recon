@@ -3,7 +3,9 @@ function [SIM, diagnostics] = combineLatticeSpectrum(bands, carriers, otf, param
 
 [h, w] = size(bands.C0);
 outputSize = [2*h, 2*w];
-otfDouble = buildLatticeOTF(outputSize(1), outputSize(2), params);
+otfDoubleParams = params;
+otfDoubleParams.pixelSizeNm = params.pixelSizeNm / 2;
+otfDouble = buildLatticeOTF(outputSize(1), outputSize(2), otfDoubleParams);
 bandDomain = getBandDomain(bands);
 
 freq0 = placeSpectrumAtCenter(bandToFrequency(bands.C0, bandDomain), outputSize);
@@ -37,7 +39,7 @@ for idx = 1:size(components, 1)
     sidebandAmplitude = components{idx, 3} / 2;
     freq = placeSpectrumAtCenter(bandToFrequency(component, bandDomain), outputSize);
     freq = shiftSpectrumOnCanvas(freq, -carrierPixel);
-    shiftedOtf = shiftOtfByCarrier(otfDouble.values, -carrierPixel);
+    shiftedOtf = shiftOtfByCarrier(otfDouble.values, carrierPixel);
     otfTaper = smoothOtfTaper(abs(shiftedOtf), params);
     otfMask = otfTaper > 0;
     phaseMask = overlapPhaseMask(freq0, freq, otf0Taper, otfTaper);
@@ -74,7 +76,7 @@ finalConfidenceMask = smoothConfidenceMask(blendDenominator, blendMax, params);
 combinedSpectrum = combinedSpectrum .* finalConfidenceMask;
 [combinedSpectrum, apodizationMask] = applyLatticeApodization(combinedSpectrum, finalConfidenceMask > 0, params);
 
-SIM = real(ifft2c(combinedSpectrum));
+SIM = real(FFT2D(combinedSpectrum, true));
 
 if any(~isfinite(SIM(:)))
     error('LatticeSIM:InvalidReconstruction', 'Reconstructed SIM image contains NaN or Inf values.');
@@ -100,6 +102,7 @@ diagnostics.sidebandPhaseMagnitude = sidebandPhaseMagnitude;
 diagnostics.overlapPhaseMasks = overlapPhaseMasks;
 diagnostics.outputImageMode = 'real';
 diagnostics.bandDomain = bandDomain;
+diagnostics.outputOtfPixelSizeNm = otfDoubleParams.pixelSizeNm;
 end
 
 function domain = getBandDomain(bands)
@@ -114,7 +117,7 @@ function frequency = bandToFrequency(component, domain)
 if strcmp(domain, 'frequency')
     frequency = component;
 else
-    frequency = fft2c(component);
+    frequency = FFT2D(component, false);
 end
 end
 
@@ -185,9 +188,9 @@ end
 function shifted = shiftSpectrumOnCanvas(spectrum, shiftPixel)
 [h, w] = size(spectrum);
 [x, y] = meshgrid(0:w-1, 0:h-1);
-image = ifft2c(spectrum);
+image = FFT2D(spectrum, true);
 phaseRamp = exp(2i*pi * (shiftPixel(1) * x / w + shiftPixel(2) * y / h));
-shifted = fft2c(image .* phaseRamp);
+shifted = FFT2D(image .* phaseRamp, false);
 end
 
 function shiftedOtf = shiftOtfByCarrier(otfValues, carrierPixel)
