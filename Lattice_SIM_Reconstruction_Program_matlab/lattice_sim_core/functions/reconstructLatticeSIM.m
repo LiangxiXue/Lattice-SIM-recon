@@ -31,7 +31,7 @@ end
 otf = buildLatticeOTF(size(stack, 1), size(stack, 2), params);
 [SIM, combineDiagnostics] = combineLatticeSpectrum(bands, carriers, otf, params);
 
-result.WF = upsampleWidefield(bands.C0, 2, bands.domain);
+result.WF = makeWidefieldFromRawFrames(rawStack);
 result.SIM = SIM;
 result.params = params;
 result.diagnostics = carrierDiagnostics;
@@ -67,9 +67,7 @@ info.psfSize = size(psf);
 info.frameMeans = squeeze(mean(mean(rawStack, 1), 2));
 end
 
-function image = upsampleWidefield(image, scale, domain)
-if strcmp(domain, 'frequency')
-    image = FFT2D(image, true);
-end
-image = imresize(abs(image), scale);
+function image = makeWidefieldFromRawFrames(rawStack)
+image = mean(double(rawStack(:, :, 3:5)), 3);
+image = imresize(image, 2);
 end

@@ -8,24 +8,38 @@ end
 [coarseCarriers, carrierDiagnostics] = estimateLatticeCarrier(bands, params);
 otf = buildLatticeOTF(size(bands.C0, 1), size(bands.C0, 2), params);
 
-peakS = latticeFitPeak(bands.C0, bands.CsPlus, otf.values, ...
-    coarseCarriers.ksPixel, params.latticeCorrelationOverlap, ...
-    params.latticeCarrierSearchStepPixels, params.latticeCarrierRefinementIterations);
-peakT = latticeFitPeak(bands.C0, bands.CtPlus, otf.values, ...
-    coarseCarriers.ktPixel, params.latticeCorrelationOverlap, ...
-    params.latticeCarrierSearchStepPixels, params.latticeCarrierRefinementIterations);
+try
+    peakS = latticeFitPeak(bands.C0, bands.CsPlus, otf.values, ...
+        coarseCarriers.ksPixel, params.latticeCorrelationOverlap, ...
+        params.latticeCarrierSearchStepPixels, params.latticeCarrierRefinementIterations);
+    peakT = latticeFitPeak(bands.C0, bands.CtPlus, otf.values, ...
+        coarseCarriers.ktPixel, params.latticeCorrelationOverlap, ...
+        params.latticeCarrierSearchStepPixels, params.latticeCarrierRefinementIterations);
 
-refinedCarriers = coarseCarriers;
-refinedCarriers.ksPixel = [peakS.kx, peakS.ky];
-refinedCarriers.ktPixel = [peakT.kx, peakT.ky];
-[h, w] = size(bands.C0);
-refinedCarriers.ksRadPerPixel = [2*pi*refinedCarriers.ksPixel(1)/w, 2*pi*refinedCarriers.ksPixel(2)/h];
-refinedCarriers.ktRadPerPixel = [2*pi*refinedCarriers.ktPixel(1)/w, 2*pi*refinedCarriers.ktPixel(2)/h];
+    refinedCarriers = coarseCarriers;
+    refinedCarriers.ksPixel = [peakS.kx, peakS.ky];
+    refinedCarriers.ktPixel = [peakT.kx, peakT.ky];
+    [h, w] = size(bands.C0);
+    refinedCarriers.ksRadPerPixel = [2*pi*refinedCarriers.ksPixel(1)/w, 2*pi*refinedCarriers.ksPixel(2)/h];
+    refinedCarriers.ktRadPerPixel = [2*pi*refinedCarriers.ktPixel(1)/w, 2*pi*refinedCarriers.ktPixel(2)/h];
 
-correlationS = latticeGetPeak(bands.C0, bands.CsPlus, otf.values, ...
-    refinedCarriers.ksPixel, params.latticeCorrelationOverlap);
-correlationT = latticeGetPeak(bands.C0, bands.CtPlus, otf.values, ...
-    refinedCarriers.ktPixel, params.latticeCorrelationOverlap);
+    correlationS = latticeGetPeak(bands.C0, bands.CsPlus, otf.values, ...
+        refinedCarriers.ksPixel, params.latticeCorrelationOverlap);
+    correlationT = latticeGetPeak(bands.C0, bands.CtPlus, otf.values, ...
+        refinedCarriers.ktPixel, params.latticeCorrelationOverlap);
+catch err
+    if ~strcmp(err.identifier, 'LatticeSIM:DegenerateCorrelationReference')
+        rethrow(err);
+    end
+
+    refinedCarriers = coarseCarriers;
+    peakS = makeFallbackPeak(refinedCarriers.ksPixel);
+    peakT = makeFallbackPeak(refinedCarriers.ktPixel);
+    correlationS = estimateFallbackCorrelation(bands.C0, bands.CsPlus, bands.CsMinus);
+    correlationT = estimateFallbackCorrelation(bands.C0, bands.CtPlus, bands.CtMinus);
+    carrierDiagnostics = appendDiagnosticWarning(carrierDiagnostics, ...
+        'No reliable C0/sideband OTF overlap; using coarse carriers and spectrum-energy modulation estimates.');
+end
 
 estimate.carriers = refinedCarriers;
 estimate.coarseCarriers = coarseCarriers;
@@ -48,4 +62,28 @@ estimate.diagnostics.correlationMagnitudeS = abs(correlationS);
 estimate.diagnostics.correlationMagnitudeT = abs(correlationT);
 estimate.diagnostics.fitPeakS = peakS;
 estimate.diagnostics.fitPeakT = peakT;
+end
+
+function peak = makeFallbackPeak(carrierPixel)
+peak.kx = carrierPixel(1);
+peak.ky = carrierPixel(2);
+peak.resPhase = 0;
+peak.resMag = 0;
+peak.correlation = 0;
+peak.control = zeros(10, 10, 1);
+end
+
+function correlation = estimateFallbackCorrelation(centerBand, plusBand, minusBand)
+centerScale = rmsMagnitude(centerBand);
+sideScale = mean([rmsMagnitude(plusBand), rmsMagnitude(minusBand)]);
+if centerScale <= eps || sideScale <= eps
+    magnitude = eps;
+else
+    magnitude = min(max(sideScale / centerScale, eps), 1);
+end
+correlation = complex(magnitude, 0);
+end
+
+function value = rmsMagnitude(image)
+value = sqrt(mean(abs(image(:)) .^ 2));
 end

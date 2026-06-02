@@ -42,4 +42,26 @@ assert(abs(estimate.phaseOffsetT + phiTOffset) < 0.15);
 assert(abs(estimate.modulationS - mS) < 0.20);
 assert(abs(estimate.modulationT - mT) < 0.20);
 assert(isfield(estimate.diagnostics, 'warnings'));
+
+params.pixelSizeNm = 19.5;
+ks = [20, 0];
+kt = [0, 22];
+bands.CsPlus = FFT2D(mS * exp(1i * phiSOffset) .* ...
+    latticeFourierShift(image, ks(1), ks(2)), false);
+bands.CsMinus = FFT2D(mS * exp(-1i * phiSOffset) .* ...
+    latticeFourierShift(image, -ks(1), -ks(2)), false);
+bands.CtPlus = FFT2D(mT * exp(1i * phiTOffset) .* ...
+    latticeFourierShift(image, kt(1), kt(2)), false);
+bands.CtMinus = FFT2D(mT * exp(-1i * phiTOffset) .* ...
+    latticeFourierShift(image, -kt(1), -kt(2)), false);
+
+estimate = estimateLatticeBandParameters(bands, params);
+
+assert(norm(estimate.carriers.ksPixel - ks) < 0.75);
+assert(norm(estimate.carriers.ktPixel - kt) < 0.75);
+assert(estimate.modulationS > 0);
+assert(estimate.modulationS <= 1);
+assert(estimate.modulationT > 0);
+assert(estimate.modulationT <= 1);
+assert(any(contains(estimate.diagnostics.warnings, 'overlap')));
 end
