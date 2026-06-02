@@ -7,7 +7,7 @@ end
 
 validateLatticeSIMStack(stack);
 
-W = latticePhaseMatrix();
+W = latticePhaseMatrix(params);
 [h, w, ~] = size(stack);
 reshaped = reshape(double(stack), h * w, 5);
 components = reshaped / transpose(W);

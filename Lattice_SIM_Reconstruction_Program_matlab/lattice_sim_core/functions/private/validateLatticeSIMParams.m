@@ -27,6 +27,15 @@ if ~any(strcmp(char(params.separationInputDomain), {'frequency'}))
     error('LatticeSIM:InvalidSeparationInputDomain', ...
         'Separation input domain must be "frequency".');
 end
+if ~isfield(params, 'phasePairs') || ~isnumeric(params.phasePairs) || ...
+        ~isequal(size(params.phasePairs), [5, 2]) || any(~isfinite(params.phasePairs(:)))
+    error('LatticeSIM:InvalidPhasePairs', 'phasePairs must be a finite 5 x 2 numeric matrix.');
+end
+if isfield(params, 'phaseMatrix') && ~isempty(params.phaseMatrix) && ...
+        (~isnumeric(params.phaseMatrix) || ~isequal(size(params.phaseMatrix), [5, 5]) || ...
+        any(~isfinite(params.phaseMatrix(:))))
+    error('LatticeSIM:InvalidPhaseMatrix', 'phaseMatrix must be empty or a finite 5 x 5 numeric matrix.');
+end
 if params.nrBands ~= 3
     error('LatticeSIM:InvalidBandCount', 'Lattice-SIM core expects nrBands = 3 for five-frame separation.');
 end

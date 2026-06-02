@@ -17,4 +17,5 @@ assert(params.enableLatticeParameterEstimation == true);
 assert(params.latticeCarrierRefinementIterations == 3);
 assert(params.latticeCarrierSearchStepPixels == 2.5);
 assert(params.latticeCorrelationOverlap == 0.15);
+assert(strcmp(char(params.carrierSearchMode), 'unconstrained'));
 end

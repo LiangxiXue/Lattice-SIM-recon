@@ -30,6 +30,14 @@ params.preprocessingMode = "hifi-rl-fft";
 params.deconvolutionIterations = 5;
 params.separationFunction = "separateLatticeBandsFrequency";
 params.separationInputDomain = "frequency";
+params.phasePairs = [
+    0,       0
+    2*pi/3, 0
+    4*pi/3, 0
+    0,       2*pi/3
+    2*pi/3, 4*pi/3
+];
+params.phaseMatrix = [];
 params.phaOff = 0;
 params.nrBands = 3;
 params.bandFactors = ones(1, 3);
@@ -44,7 +52,7 @@ params.latticeCorrelationOverlap = 0.15;
 params.carrierMinRadiusPixels = [];
 params.carrierPeakWindow = 1;
 params.carrierWeakPeakRatio = 4;
-params.carrierSearchMode = "axis-aligned";
+params.carrierSearchMode = "unconstrained";
 params.carrierAxisToleranceDeg = 15;
 
 if ~isstruct(userParams)

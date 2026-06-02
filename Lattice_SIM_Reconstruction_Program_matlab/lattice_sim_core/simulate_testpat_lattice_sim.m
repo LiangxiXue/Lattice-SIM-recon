@@ -18,13 +18,73 @@ clc;
 rootDir = fileparts(mfilename('fullpath'));
 addpath(fullfile(rootDir, 'functions'));
 
+%% Editable simulation and reconstruction parameters.
 inputPath = fullfile(rootDir, 'testpat.tiff');
+outputDir = fullfile(rootDir, 'testpat_lattice_simulation_output');
+cropSize = 256;
+
+% Simulated carrier frequency size and directions.
+% expansionFactor controls the carrier magnitude like the original script.
+% carrierAngleTarget selects which carrier uses carrierAngleDeg; the other
+% carrier is generated orthogonally.
+frequencyMode = "expansion-factor-angle";
+expansionFactor = 1.6;
+carrierAngleTarget = "s";
+carrierAngleDeg = 18;
+
+% Acquisition phase model. Rows are the five captured frames; columns are
+% [s-direction phase, t-direction phase], in radians.
+acquisitionPhasePairs = [
+    0,       0
+    2*pi/3, 0
+    4*pi/3, 0
+    0,       2*pi/3
+    2*pi/3, 4*pi/3
+];
+
+% Leave empty to derive the 5 x 5 reconstruction matrix from
+% acquisitionPhasePairs. Set a custom 5 x 5 matrix to use it directly.
+reconstructionPhaseMatrix = [];
+
+simParams.expansionFactor = [];
+simParams.modulationS = 0.45;
+simParams.modulationT = 0.40;
+simParams.meanIllumination = 1.0;
+simParams.pixelSizeNm = 97.5;
+simParams.emissionWavelengthNm = 561;
+simParams.NA = 1.42;
+simParams.noiseLevel = 0.1;
+simParams.phaseErrorStd = 0.1;
+simParams.randomSeed = 7;
+simParams.useOTF = true;
+simParams.phasePairs = acquisitionPhasePairs;
+[ksPixel, ktPixel] = carrierPixelsFromExpansionAngle( ...
+    expansionFactor, [cropSize, cropSize], simParams.pixelSizeNm, ...
+    simParams.emissionWavelengthNm, simParams.NA, carrierAngleTarget, ...
+    carrierAngleDeg);
+simParams.expansionFactor = expansionFactor;
+simParams.ksPixel = ksPixel;
+simParams.ktPixel = ktPixel;
+
+reconParams = defaultLatticeSIMParams();
+reconParams.pixelSizeNm = simParams.pixelSizeNm;
+reconParams.emissionWavelengthNm = simParams.emissionWavelengthNm;
+reconParams.NA = simParams.NA;
+reconParams.modulationS = simParams.modulationS;
+reconParams.modulationT = simParams.modulationT;
+reconParams.phasePairs = acquisitionPhasePairs;
+reconParams.phaseMatrix = reconstructionPhaseMatrix;
+reconParams.normalizeFrames = true;
+reconParams = defaultLatticeSIMParams(reconParams);
+if isempty(reconParams.phaseMatrix)
+    reconParams.phaseMatrix = makeLatticePhaseMatrix(reconParams);
+end
+
 if exist(inputPath, 'file') ~= 2
     error('LatticeSIM:MissingInputImage', 'Expected test image not found: %s', inputPath);
 end
 
 objectImageFull = double(imread(inputPath));
-cropSize = 256;
 if size(objectImageFull, 1) < cropSize || size(objectImageFull, 2) < cropSize
     error('LatticeSIM:InvalidInputImage', 'testpat.tiff must be at least %d x %d pixels.', cropSize, cropSize);
 end
@@ -34,30 +94,20 @@ colStart = floor((size(objectImageFull, 2) - cropSize) / 2) + 1;
 objectImage = objectImageFull(rowStart:rowStart+cropSize-1, colStart:colStart+cropSize-1);
 
 simParams.imageSize = size(objectImage);
-simParams.expansionFactor = 1.6;
-simParams.modulationS = 0.45;
-simParams.modulationT = 0.40;
-simParams.meanIllumination = 1.0;
-simParams.pixelSizeNm = 97.5;
-simParams.emissionWavelengthNm = 561;
-simParams.NA = 1.42;
-simParams.noiseLevel = 0.05;
-simParams.phaseErrorStd = 0.01;
-simParams.randomSeed = 7;
-simParams.useOTF = true;
-[simParams.ksPixel, simParams.ktPixel] = expansionFactorToCarrierPixels( ...
-    simParams.expansionFactor, simParams.imageSize, simParams.pixelSizeNm, ...
-    simParams.emissionWavelengthNm, simParams.NA);
 
 [rawStack, truth] = simulateLatticeSIMExperiment(objectImage, simParams);
 
-reconParams = defaultLatticeSIMParams();
 reconParams.pixelSizeNm = simParams.pixelSizeNm;
 reconParams.emissionWavelengthNm = simParams.emissionWavelengthNm;
 reconParams.NA = simParams.NA;
 reconParams.modulationS = simParams.modulationS;
 reconParams.modulationT = simParams.modulationT;
-reconParams.normalizeFrames = true;
+reconParams.phasePairs = simParams.phasePairs;
+if isempty(reconstructionPhaseMatrix)
+    reconParams.phaseMatrix = makeLatticePhaseMatrix(reconParams);
+else
+    reconParams.phaseMatrix = reconstructionPhaseMatrix;
+end
 
 result = reconstructLatticeSIM(rawStack, reconParams);
 normalizedRawStack = normalizeSIMFrames(rawStack, reconParams);
@@ -65,7 +115,6 @@ comparisonBands = separateLatticeBands(normalizedRawStack, reconParams);
 widefieldC0 = imresize(abs(comparisonBands.C0), 2);
 widefieldD3D4D5 = imresize(mean(normalizedRawStack(:, :, 3:5), 3), 2);
 
-outputDir = fullfile(rootDir, 'testpat_lattice_simulation_output');
 diagnosticsDir = fullfile(outputDir, 'diagnostics');
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
@@ -118,5 +167,26 @@ end
 function deleteIfExists(path)
 if exist(path, 'file') == 2
     delete(path);
+end
+end
+
+function [ksPixel, ktPixel] = carrierPixelsFromExpansionAngle( ...
+    expansionFactor, imageSize, pixelSizeNm, emissionWavelengthNm, NA, ...
+    carrierAngleTarget, carrierAngleDeg)
+[~, ~, carrierMagnitudePixels] = expansionFactorToCarrierPixels( ...
+    expansionFactor, imageSize, pixelSizeNm, emissionWavelengthNm, NA);
+
+primary = carrierMagnitudePixels .* [cosd(carrierAngleDeg), sind(carrierAngleDeg)];
+orthogonal = carrierMagnitudePixels .* [cosd(carrierAngleDeg + 90), sind(carrierAngleDeg + 90)];
+
+if strcmp(char(carrierAngleTarget), 's')
+    ksPixel = round(primary);
+    ktPixel = round(orthogonal);
+elseif strcmp(char(carrierAngleTarget), 't')
+    ktPixel = round(primary);
+    ksPixel = round(-orthogonal);
+else
+    error('LatticeSIM:InvalidCarrierAngleTarget', ...
+        'carrierAngleTarget must be "s" or "t".');
 end
 end

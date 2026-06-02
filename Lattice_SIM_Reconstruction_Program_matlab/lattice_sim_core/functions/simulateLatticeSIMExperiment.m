@@ -25,7 +25,7 @@ end
 [h, w] = size(objectImage);
 [x, y] = meshgrid(0:w-1, 0:h-1);
 
-phasePairs = latticePhasePairs();
+phasePairs = simParams.phasePairs;
 
 phaseErrors = simParams.phaseErrorStd .* randn(5, 2);
 illumination = zeros(h, w, 5);
@@ -84,6 +84,7 @@ params.emissionWavelengthNm = 532;
 params.NA = 1.2;
 params.noiseLevel = 0.02;
 params.phaseErrorStd = 0.0;
+params.phasePairs = latticePhasePairs();
 params.randomSeed = 1;
 params.useOTF = true;
 
@@ -114,6 +115,10 @@ if params.noiseLevel < 0 || params.phaseErrorStd < 0
 end
 if numel(params.ksPixel) ~= 2 || numel(params.ktPixel) ~= 2
     error('LatticeSIM:InvalidSimulationParameter', 'ksPixel and ktPixel must be two-element vectors.');
+end
+if ~isnumeric(params.phasePairs) || ~isequal(size(params.phasePairs), [5, 2]) || ...
+        any(~isfinite(params.phasePairs(:)))
+    error('LatticeSIM:InvalidSimulationParameter', 'phasePairs must be a finite 5 x 2 numeric matrix.');
 end
 end
 
