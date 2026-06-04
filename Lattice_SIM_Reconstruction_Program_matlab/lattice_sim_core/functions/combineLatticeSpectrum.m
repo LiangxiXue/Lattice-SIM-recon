@@ -12,9 +12,8 @@ freq0 = placeSpectrumAtCenter(bandToFrequency(bands.C0, bandDomain), outputSize)
 otf0 = otfDouble.values;
 otf0Taper = smoothOtfTaper(abs(otf0), params);
 otf0Mask = otf0Taper > 0;
-attenuation0 = otfAttenuationMask(otf0, params);
-centralBlend = otf0Taper .* attenuation0;
-num = freq0 .* otf0Taper .* conj(otf0) .* attenuation0;
+centralBlend = otf0Taper;
+num = freq0 .* otf0Taper .* conj(otf0);
 den = abs(otf0).^2;
 blendDenominator = abs(otf0).^2 .* centralBlend;
 bandWeightSum = abs(otf0).^2 .* otf0Taper;
@@ -27,16 +26,15 @@ sidebandPhaseMagnitude = zeros(1, 4);
 overlapPhaseMasks = cell(1, 4);
 
 components = {
-    bands.CsPlus,  carriers.ksPixel, params.modulationS
-    bands.CsMinus, -carriers.ksPixel, params.modulationS
-    bands.CtPlus,  carriers.ktPixel, params.modulationT
-    bands.CtMinus, -carriers.ktPixel, params.modulationT
+    bands.CsPlus,  carriers.ksPixel
+    bands.CsMinus, -carriers.ksPixel
+    bands.CtPlus,  carriers.ktPixel
+    bands.CtMinus, -carriers.ktPixel
 };
 
 for idx = 1:size(components, 1)
     component = components{idx, 1};
     carrierPixel = components{idx, 2};
-    sidebandAmplitude = components{idx, 3} / 2;
     freq = placeSpectrumAtCenter(bandToFrequency(component, bandDomain), outputSize);
     freq = shiftSpectrumOnCanvas(freq, -carrierPixel);
     shiftedOtf = shiftOtfByCarrier(otfDouble.values, carrierPixel);
@@ -50,9 +48,8 @@ for idx = 1:size(components, 1)
         phaseReference = freq(centerRow, centerCol) * conj(freq0(centerRow, centerCol));
     end
     freq = freq .* exp(-1i * angle(phaseReference));
-    attenuation = otfAttenuationMask(shiftedOtf, params);
-    bandBlend = otfTaper .* attenuation;
-    num = num + freq .* otfTaper .* conj(shiftedOtf) .* attenuation ./ sidebandAmplitude;
+    bandBlend = otfTaper;
+    num = num + freq .* otfTaper .* conj(shiftedOtf);
     den = den + abs(shiftedOtf).^2;
     blendDenominator = blendDenominator + abs(shiftedOtf).^2 .* bandBlend;
     bandWeight = abs(shiftedOtf).^2 .* otfTaper;
@@ -103,6 +100,7 @@ diagnostics.overlapPhaseMasks = overlapPhaseMasks;
 diagnostics.outputImageMode = 'real';
 diagnostics.bandDomain = bandDomain;
 diagnostics.outputOtfPixelSizeNm = otfDoubleParams.pixelSizeNm;
+diagnostics.modulationCompensationMode = 'separation-matrix';
 end
 
 function domain = getBandDomain(bands)
@@ -128,22 +126,6 @@ high = maxOtf * params.otfTaperHigh;
 t = (otfValues - low) ./ (high - low + eps);
 t = min(max(t, 0), 1);
 taper = t .* t .* (3 - 2*t);
-end
-
-function attenuation = otfAttenuationMask(otfValues, params)
-attenuation = ones(size(otfValues));
-if ~isfield(params, 'otfAttenuationEnabled') || ~params.otfAttenuationEnabled
-    return;
-end
-
-[~, maxIdx] = max(abs(otfValues(:)));
-[centerRow, centerCol] = ind2sub(size(otfValues), maxIdx);
-[h, w] = size(otfValues);
-[x, y] = meshgrid(1:w, 1:h);
-radius = hypot((x - centerCol) * 2 / w, (y - centerRow) * 2 / h);
-attenuation = 1 - params.otfAttenuationStrength .* ...
-    exp(-(radius .^ 2) ./ ((0.5 * params.otfAttenuationFwhm) ^ 2));
-attenuation = min(max(attenuation, 0), 1);
 end
 
 function mask = overlapPhaseMask(freq0, freq, taper0, taper1)

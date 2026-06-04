@@ -6,6 +6,7 @@
 % and output in the workspace.
 
 close all;
+clear all;
 clc;
 %% Runtime switches.
 if ~exist('showFigures', 'var') || isempty(showFigures)

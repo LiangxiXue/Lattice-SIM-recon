@@ -64,4 +64,26 @@ assert(estimate.modulationS <= 1);
 assert(estimate.modulationT > 0);
 assert(estimate.modulationT <= 1);
 assert(any(contains(estimate.diagnostics.warnings, 'overlap')));
+
+params.pixelSizeNm = 97.5;
+params.carrierWeakPeakRatio = 1.05;
+ksPlus = [8, 0];
+ksMinus = [-12, 0];
+bands.CsPlus = FFT2D(0.15 * mS * exp(1i * phiSOffset) .* ...
+    latticeFourierShift(image, ksPlus(1), ksPlus(2)), false);
+bands.CsMinus = FFT2D(mS * exp(-1i * phiSOffset) .* ...
+    latticeFourierShift(image, ksMinus(1), ksMinus(2)), false);
+bands.CtPlus = FFT2D(mT * exp(1i * phiTOffset) .* ...
+    latticeFourierShift(image, kt(1), kt(2)), false);
+bands.CtMinus = FFT2D(mT * exp(-1i * phiTOffset) .* ...
+    latticeFourierShift(image, -kt(1), -kt(2)), false);
+
+estimate = estimateLatticeBandParameters(bands, params);
+
+assert(estimate.carriers.ksPixel(1) > 10.5);
+assert(estimate.carriers.ksPixel(1) < 12.75);
+assert(isfield(estimate.diagnostics, 'sidebandMeasurements'));
+assert(isfield(estimate.diagnostics, 'pairResidualS'));
+assert(estimate.diagnostics.pairResidualS > 1);
+assert(any(contains(estimate.diagnostics.warnings, 'S sideband pair is inconsistent')));
 end

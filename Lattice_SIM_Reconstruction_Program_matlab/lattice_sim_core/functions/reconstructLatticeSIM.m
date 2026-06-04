@@ -11,15 +11,35 @@ validateLatticeSIMParams(params, true);
 [stack, preprocessingInfo] = preprocessLatticeSIMFrames(rawStack, params);
 params.preprocessingInfo = preprocessingInfo;
 
+if ~params.enableLatticeParameterEstimation
+    params.estimatedModulationS = params.modulationS;
+    params.estimatedModulationT = params.modulationT;
+end
 firstPassBands = separateLatticeBandsFrequency(stack, params);
 if params.enableLatticeParameterEstimation
     latticeEstimate = estimateLatticeBandParameters(firstPassBands, params);
+    rawModulationS = latticeEstimate.modulationS;
+    rawModulationT = latticeEstimate.modulationT;
+    [protectedModulationS, protectionAppliedS] = protectLatticeModulation(rawModulationS, params);
+    [protectedModulationT, protectionAppliedT] = protectLatticeModulation(rawModulationT, params);
     params.phaseOffsetS = latticeEstimate.phaseOffsetS;
     params.phaseOffsetT = latticeEstimate.phaseOffsetT;
-    params.estimatedModulationS = latticeEstimate.modulationS;
-    params.estimatedModulationT = latticeEstimate.modulationT;
-    params.modulationS = latticeEstimate.modulationS;
-    params.modulationT = latticeEstimate.modulationT;
+    params.estimatedModulationS = protectedModulationS;
+    params.estimatedModulationT = protectedModulationT;
+    params.modulationS = protectedModulationS;
+    params.modulationT = protectedModulationT;
+    latticeEstimate.rawEstimatedModulationS = rawModulationS;
+    latticeEstimate.rawEstimatedModulationT = rawModulationT;
+    latticeEstimate.protectedModulationS = protectedModulationS;
+    latticeEstimate.protectedModulationT = protectedModulationT;
+    latticeEstimate.modulationProtectionAppliedS = protectionAppliedS;
+    latticeEstimate.modulationProtectionAppliedT = protectionAppliedT;
+    latticeEstimate.diagnostics.rawEstimatedModulationS = rawModulationS;
+    latticeEstimate.diagnostics.rawEstimatedModulationT = rawModulationT;
+    latticeEstimate.diagnostics.protectedModulationS = protectedModulationS;
+    latticeEstimate.diagnostics.protectedModulationT = protectedModulationT;
+    latticeEstimate.diagnostics.modulationProtectionAppliedS = protectionAppliedS;
+    latticeEstimate.diagnostics.modulationProtectionAppliedT = protectionAppliedT;
     bands = separateLatticeBandsFrequency(stack, params);
     carriers = latticeEstimate.carriers;
     carrierDiagnostics = latticeEstimate.diagnostics;
@@ -70,4 +90,14 @@ end
 function image = makeWidefieldFromRawFrames(rawStack)
 image = mean(double(rawStack(:, :, 3:5)), 3);
 image = imresize(image, 2);
+end
+
+function [modulation, protectionApplied] = protectLatticeModulation(rawModulation, params)
+modulation = rawModulation;
+protectionApplied = false;
+if isfield(params, 'modulationProtectionEnabled') && params.modulationProtectionEnabled && ...
+        rawModulation < params.modulationMinReliable
+    modulation = params.modulationFallback;
+    protectionApplied = true;
+end
 end
