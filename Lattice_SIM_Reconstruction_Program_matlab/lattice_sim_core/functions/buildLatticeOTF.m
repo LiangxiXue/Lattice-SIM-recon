@@ -10,13 +10,20 @@ rho = hypot(fx, fy) / cutoff;
 otfValues = zeros(imageHeight, imageWidth);
 inside = rho <= 1;
 idealValues = (2 / pi) * (acos(rho(inside)) - rho(inside) .* sqrt(1 - rho(inside).^2));
-otfValues(inside) = idealValues .* (params.hifiOtfA .^ rho(inside));
+otfValues(inside) = idealValues;
+
+empiricalDampingMask = zeros(imageHeight, imageWidth);
+empiricalDampingMask(inside) = params.hifiOtfA .^ rho(inside);
+attenuationMask = ones(imageHeight, imageWidth);
 if params.otfAttenuationEnabled
-    otfValues = otfValues .* hifiAttenuationMask(fx, fy, params);
+    attenuationMask = hifiAttenuationMask(fx, fy, params);
 end
 
 otf.values = otfValues;
 otf.supportMask = otfValues > 0;
+otf.empiricalDampingMask = empiricalDampingMask;
+otf.attenuationMask = attenuationMask;
+otf.reconstructionFilter = empiricalDampingMask .* attenuationMask;
 otf.fxCyclesPerNm = fx;
 otf.fyCyclesPerNm = fy;
 otf.cutoffCyclesPerNm = cutoff;

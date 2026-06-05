@@ -10,14 +10,13 @@ bandDomain = getBandDomain(bands);
 
 freq0 = placeSpectrumAtCenter(bandToFrequency(bands.C0, bandDomain), outputSize);
 otf0 = otfDouble.values;
-otf0Taper = smoothOtfTaper(abs(otf0), params);
+otf0Taper = double(abs(otf0) > 0);
 otf0Mask = otf0Taper > 0;
-centralBlend = otf0Taper;
-num = freq0 .* otf0Taper .* conj(otf0);
+fftDirectlyCombined = freq0 .* conj(otf0);
 den = abs(otf0).^2;
-blendDenominator = abs(otf0).^2 .* centralBlend;
-bandWeightSum = abs(otf0).^2 .* otf0Taper;
-attenuatedBandWeightSum = blendDenominator;
+blendDenominator = den;
+bandWeightSum = den;
+attenuatedBandWeightSum = den;
 bandCoverageCount = double(otf0Mask);
 bandContributionMasks = {otf0Mask};
 bandTaperMasks = {otf0Taper};
@@ -38,7 +37,7 @@ for idx = 1:size(components, 1)
     freq = placeSpectrumAtCenter(bandToFrequency(component, bandDomain), outputSize);
     freq = shiftSpectrumOnCanvas(freq, -carrierPixel);
     shiftedOtf = shiftOtfByCarrier(otfDouble.values, carrierPixel);
-    otfTaper = smoothOtfTaper(abs(shiftedOtf), params);
+    otfTaper = double(abs(shiftedOtf) > 0);
     otfMask = otfTaper > 0;
     phaseMask = overlapPhaseMask(freq0, freq, otf0Taper, otfTaper);
     phaseReference = sum(freq(phaseMask) .* conj(freq0(phaseMask)), 'all');
@@ -48,13 +47,12 @@ for idx = 1:size(components, 1)
         phaseReference = freq(centerRow, centerCol) * conj(freq0(centerRow, centerCol));
     end
     freq = freq .* exp(-1i * angle(phaseReference));
-    bandBlend = otfTaper;
-    num = num + freq .* otfTaper .* conj(shiftedOtf);
-    den = den + abs(shiftedOtf).^2;
-    blendDenominator = blendDenominator + abs(shiftedOtf).^2 .* bandBlend;
-    bandWeight = abs(shiftedOtf).^2 .* otfTaper;
+    fftDirectlyCombined = fftDirectlyCombined + freq .* conj(shiftedOtf);
+    bandWeight = abs(shiftedOtf).^2;
+    den = den + bandWeight;
+    blendDenominator = den;
     bandWeightSum = bandWeightSum + bandWeight;
-    attenuatedBandWeightSum = attenuatedBandWeightSum + abs(shiftedOtf).^2 .* bandBlend;
+    attenuatedBandWeightSum = attenuatedBandWeightSum + bandWeight;
     bandCoverageCount = bandCoverageCount + double(otfMask);
     bandContributionMasks{end + 1} = otfMask;
     bandTaperMasks{end + 1} = otfTaper;
@@ -63,15 +61,16 @@ for idx = 1:size(components, 1)
     overlapPhaseMasks{idx} = phaseMask;
 end
 
-combinedSpectrum = num ./ (blendDenominator + params.wiener);
+wienerFilter = 1 ./ (blendDenominator + params.wiener);
+combinedSpectrum = fftDirectlyCombined .* wienerFilter;
 
 blendMax = max(blendDenominator(:));
 supportMask = blendDenominator > blendMax * params.supportThreshold;
 reliabilityMask = blendDenominator > blendMax * params.reliabilityThreshold;
 finalSupportMask = supportMask;
-finalConfidenceMask = smoothConfidenceMask(blendDenominator, blendMax, params);
+finalConfidenceMask = double(supportMask);
 combinedSpectrum = combinedSpectrum .* finalConfidenceMask;
-[combinedSpectrum, apodizationMask] = applyLatticeApodization(combinedSpectrum, finalConfidenceMask > 0, params);
+[combinedSpectrum, apodizationMask] = applyLatticeApodization(combinedSpectrum, supportMask, params);
 
 SIM = real(FFT2D(combinedSpectrum, true));
 
@@ -80,9 +79,12 @@ if any(~isfinite(SIM(:)))
 end
 
 diagnostics.simSpectrum = combinedSpectrum;
+diagnostics.fftDirectlyCombined = fftDirectlyCombined;
+diagnostics.wienerFilter = wienerFilter;
 diagnostics.wienerDenominator = blendDenominator;
 diagnostics.physicalOtfDenominator = den;
 diagnostics.blendDenominator = blendDenominator;
+diagnostics.physicalOtfValues = otfDouble.values;
 diagnostics.bandWeightSum = bandWeightSum;
 diagnostics.attenuatedBandWeightSum = attenuatedBandWeightSum;
 diagnostics.bandCoverageCount = bandCoverageCount;
@@ -99,6 +101,7 @@ diagnostics.sidebandPhaseMagnitude = sidebandPhaseMagnitude;
 diagnostics.overlapPhaseMasks = overlapPhaseMasks;
 diagnostics.outputImageMode = 'real';
 diagnostics.bandDomain = bandDomain;
+diagnostics.fusionMode = 'hifi-style-direct-wiener';
 diagnostics.outputOtfPixelSizeNm = otfDoubleParams.pixelSizeNm;
 diagnostics.modulationCompensationMode = 'separation-matrix';
 end

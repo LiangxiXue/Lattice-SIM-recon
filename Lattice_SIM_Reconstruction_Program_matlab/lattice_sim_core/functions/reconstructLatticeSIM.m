@@ -17,7 +17,7 @@ if ~params.enableLatticeParameterEstimation
 end
 firstPassBands = separateLatticeBandsFrequency(stack, params);
 if params.enableLatticeParameterEstimation
-    latticeEstimate = estimateLatticeBandParameters(firstPassBands, params);
+    latticeEstimate = estimateLatticeStackParameters(stack, params);
     rawModulationS = latticeEstimate.modulationS;
     rawModulationT = latticeEstimate.modulationT;
     [protectedModulationS, protectionAppliedS] = protectLatticeModulation(rawModulationS, params);

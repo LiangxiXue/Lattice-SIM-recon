@@ -6,7 +6,6 @@
 % and output in the workspace.
 
 close all;
-clear all;
 clc;
 %% Runtime switches.
 if ~exist('showFigures', 'var') || isempty(showFigures)
@@ -52,7 +51,7 @@ if ~exist('microscopeParams', 'var') || isempty(microscopeParams)
 end
 microscopeDefaults = struct( ...
     'pixelSizeNm', 97.5, ...
-    'emissionWavelengthNm', 561, ...
+    'emissionWavelengthNm', 610, ...
     'objectiveNA', 1.42);
 microscopeNames = fieldnames(microscopeDefaults);
 for microscopeIdx = 1:numel(microscopeNames)
