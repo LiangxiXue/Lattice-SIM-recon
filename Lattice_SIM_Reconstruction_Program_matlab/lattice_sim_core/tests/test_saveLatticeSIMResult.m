@@ -20,6 +20,16 @@ assert(exist(saved.widefieldPath, 'file') == 2);
 assert(exist(saved.simPath, 'file') == 2);
 assert(exist(saved.resultMatPath, 'file') == 2);
 
+widefieldInfo = imfinfo(saved.widefieldPath);
+simInfo = imfinfo(saved.simPath);
+widefieldImage = imread(saved.widefieldPath);
+simImage = imread(saved.simPath);
+
+assert(widefieldInfo.BitDepth == 16);
+assert(simInfo.BitDepth == 16);
+assert(isa(widefieldImage, 'uint16'));
+assert(isa(simImage, 'uint16'));
+
 fid = fopen(saved.resultMatPath, 'r');
 assert(fid > 0);
 fileHeader = fread(fid, 64, '*char')';

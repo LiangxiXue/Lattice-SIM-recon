@@ -1,0 +1,13 @@
+Best HiFi-style two-step frequency tuning
+wienerW1	0.15
+wienerW2	0.06
+apodizationRadius	0.75
+hifiDenominatorScaleW1	1.2
+hifiDenominatorScaleW2	0.8
+score	1.08251
+expandedToCenterRms	0.211343
+sidebandMeanToCenterRms	0.2355
+sidebandMinToCenterRms	0.230694
+sidebandBalance	0.979593
+totalEnergyRatioToInput	0.288542
+p99GainRatioToInput	0.28072

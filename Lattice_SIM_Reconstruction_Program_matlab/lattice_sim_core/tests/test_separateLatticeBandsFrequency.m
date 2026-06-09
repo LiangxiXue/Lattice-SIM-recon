@@ -26,22 +26,22 @@ phasePairs = [
     0,       2*pi/3
     2*pi/3, 4*pi/3
 ];
-stackFFT = zeros([imageSize, 5]);
-for idx = 1:5
-    phiS = phasePairs(idx, 1);
-    phiT = phasePairs(idx, 2);
-    stackFFT(:, :, idx) = expected.C0 ...
-        + expected.CsPlus .* exp(1i * phiS) ...
-        + expected.CsMinus .* exp(-1i * phiS) ...
-        + expected.CtPlus .* exp(1i * phiT) ...
-        + expected.CtMinus .* exp(-1i * phiT);
-end
-
 params = defaultLatticeSIMParams();
 params.phaseOffsetS = 0;
 params.phaseOffsetT = 0;
 params.estimatedModulationS = 1;
 params.estimatedModulationT = 1;
+
+stackFFT = zeros([imageSize, 5]);
+for idx = 1:5
+    phiS = phasePairs(idx, 1);
+    phiT = phasePairs(idx, 2);
+    stackFFT(:, :, idx) = 2 .* expected.C0 ...
+        + (params.estimatedModulationS ./ 2) .* expected.CsPlus .* exp(1i * phiS) ...
+        + (params.estimatedModulationS ./ 2) .* expected.CsMinus .* exp(-1i * phiS) ...
+        + (params.estimatedModulationT ./ 2) .* expected.CtPlus .* exp(1i * phiT) ...
+        + (params.estimatedModulationT ./ 2) .* expected.CtMinus .* exp(-1i * phiT);
+end
 
 bands = separateLatticeBandsFrequency(stackFFT, params);
 

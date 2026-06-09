@@ -1,0 +1,1123 @@
+
+===== PAGE 1 =====
+Wen et al. Light: Science & Applications           (2021) 10:70 Ofﬁcial journal of the CIOMP 2047-7538
+https://doi.org/10.1038/s41377-021-00513-w www.nature.com/lsa
+ARTICLE Open Access
+High-ﬁdelity structured illumination microscopy by
+point-spread-function engineering
+Gang Wen1,2, Simin Li1,L i n b oW a n g1,X i a o h uC h e n1, Zhenglong Sun1, Yong Liang1,X i nJ i n1,Y i f a nX i n g3, Yaming Jiu3,
+Yuguo Tang1 and Hui Li1
+Abstract
+Structured illumination microscopy (SIM) has become a widely used tool for insight into biomedical challenges due to
+its rapid, long-term, and super-resolution (SR) imaging. However, artifacts that often appear in SIM images have long
+brought into question its ﬁdelity, and might cause misinterpretation of biological structures. We present HiFi-SIM, a
+high-ﬁdelity SIM reconstruction algorithm, by engineering the effective point spread function (PSF) into an ideal form.
+HiFi-SIM can effectively reduce commonly seen artifacts without loss of ﬁne structures and improve the axial
+sectioning for samples with strong background. In particular, HiFi-SIM is not sensitive to the commonly used PSF and
+reconstruction parameters; hence, it lowers the requirements for dedicated PSF calibration and complicated parameter
+adjustment, thus promoting SIM as a daily imaging tool.
+Introduction
+Super-resolution structured illumination microscopy
+(SR-SIM), which breaks the optical diffraction barrier,
+offers an unprecedented opportunity for investigating
+biological structures at a ~100 nm scale 1,2. Despite the
+relatively modest spatial resolution improvement com-
+pared to other SR techniques
+3,4, SR-SIM is recognized as
+one of the most promising tools for studying the dynamics
+of subcellular structures in live cells due to its high pho-
+ton ef ﬁciency, insigni ﬁcant photon damage, and bleach-
+ing, as well as compatibility with most ﬂuorescent labeling
+protocols
+5–10. For example, moving vesicles in the endo-
+plasmic reticulum (ER) were imaged by Hessian-SIM with
+a spatiotemporal resolution of 88 nm and 188 Hz
+8. The
+cortical ER (cER) network near the basal cell cortex were
+imaged by GI-SIM at 97 nm resolution and 266 Hz frame-
+rate over thousands of time points
+9. Recently, the
+GPU-accelerated technology realized multi-color instant
+SR-SIM at video frame-rate, with a delay of less than
+250 ms between acquisition and reconstruction 11.
+Despite these advances, the ﬁdelity and quanti ﬁcation of
+SR-SIM are often challenged 12,13 because the ﬁnal SR
+images heavily rely on post-processing algorithms that are
+prone to reconstruction artifacts
+8,14,15. To acquire SIM
+images with minimal artifacts, dedicated practical guide-
+lines were recommended for instrument re ﬁnement
+16,
+data acquisition 17,18, and sample preparation 18,19. Several
+studies have been conducted on reconstruction algo-
+rithms, including accurate illumination parameter esti-
+mation
+20–24, iterative deconvolution 8,25,26, and ﬁne tuning
+of reconstruction parameters 27. Despite all these efforts,
+artifacts that limit the implementation of SIM as a daily
+imaging tool still frequently appear in SIM images. In
+particular, new structures discovered using SR-SIM need
+to be interpreted with special care to avoid mis-
+interpretation. Recently, deep learning has shown great
+potential for SR-SIM reconstruction
+28,29, but the results
+are closely related to SR images obtained via other
+methods for training neural network, thus the ﬁdelity is
+still questioned.
+In this study, we demonstrate a novel SIM algorithm
+based on PSF engineering termed as High-Fidelity SIM
+© The Author(s) 2021
+Open AccessThis article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution andreproduction
+in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a lin kt ot h eC r e a t i v eCommons license,and indicate if
+changes were made. The images or other third party material in this article are included in the article’s Creative Commons license, unless indicatedotherwise in a credit line to the material. If
+material is not included in the article’s Creative Commons license and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain
+permission directly from the copyright holder. To view a copy of this license, visithttp://creativecommons.org/licenses/by/4.0/.
+Correspondence: Yuguo Tang ( tangyg@sibet.ac.cn) or Hui Li ( hui.li@sibet.ac.cn)
+1Jiangsu Key Laboratory of Medical Optics, CAS Center for Excellence in
+Molecular Cell Science, Suzhou Institute of Biomedical Engineering and
+Technology, Chinese Academy of Sciences, Suzhou, Jiangsu 215163, China
+2Academy for Engineering and Technology, Fudan University, Shanghai
+200433, China
+Full list of author information is available at the end of the article
+1234567890():,;1234567890():,;
+1234567890():,;
+1234567890():,;
+===== PAGE 2 =====
+reconstruction algorithm (HiFi-SIM) that can reconstruct
+SR images with minimal artifacts and optimal optical
+sectioning (OS). By combining the normalized cross-
+correlation method with a spectrum notch, HiFi-SIM can
+automatically estimate reconstruction parameters from
+the majority of raw data. With a two-step spectrum
+optimization, HiFi-SIM can effectively suppress com-
+monly seen artifacts and remove residual background
+ﬂuorescence without losing ﬁne and weak structures.
+HiFi-SIM uses a theoretical PSF and has a few user-
+deﬁned parameters, avoiding stringent PSF calibration
+and complex parameter adjustments. We tested HiFi-SIM
+on images of standard samples of representative struc-
+tures and biological samples of various qualities. The
+results were compared with that of several commercial
+setups and open-source algorithms, and HiFi-SIM
+demonstrated a superior performance among all the
+other methods.
+Results
+HiFi-SIM principle
+To date, the reconstruction algorithms used by most
+commercial SIM setups and successful open-source
+packages, such as SIMToolbox
+30, fairSIM 31, and Open-
+SIM32, were based on the Wiener deconvolution proce-
+dure established by Heintzmann 33 and Gustafsson 34
+(hereinafter referred to as “Wiener-SIM”). Some iterative
+deconvolution algorithms, such as total variation (TV)-
+SIM8,25 and Hessian-SIM 8, are also based on the results
+of Wiener-SIM. Reconstruction of Wiener-SIM is con-
+ducted by the recombination of different spectrum
+components in Fourier domain, which inevitably leads to
+an equivalent optical transfer function (OTF) with non-
+smooth shape
+4,7 ( ~HTheoretical kðÞ in Fig. 1a). By inverse
+Fourier transformation, the downward kinks in the OTF
+are transformed into sidelobes in the PSF. The abnormal
+features of OTF could be corrected by Wiener decon-
+volution, but this requires that the OTF used and esti-
+mated reconstruction parameters accurately match the
+actual imaging conditions
+8,15,18,27;o t h e r w i s e ,t h eﬁnal SR
+images often exhibit reconstruction artifacts, such as
+sidelobe artifacts. Moreover, the residual background
+signals are usually concentrated at the raised peaks of
+~H
+Theoretical kðÞ , causing periodic honeycomb artifacts 7,12,18
+and limiting the OS capability 35–38. This defect is usually
+remedied by OTF attenuation 20,27,31,36, but this solution
+cannot achieve a good balance between rejecting back-
+ground ﬂuorescence and protecting ﬁne and weak
+structures. For a more detailed discussion of the thorny
+issues in Wiener-SIM reconstruction, see Supplementary
+Note 1.
+The ideal OTF for SR-SIM ( ~H
+ideal kðÞ ) should be a
+similar form to that of wide- ﬁeld OTF ( ~Hdet kðÞ ) but with
+extended cut-off frequency (Fig. 1a). The idea is to design
+an optimization function ~W ðkÞ applied to ~HTheoretical kðÞ to
+make it as close as possible to the ideal form
+~HTheoretical kðÞ /C1 ~W ðkÞﬃ ~Hideal kðÞ ¼ ~Hdet
+kc
+kc þ kex
+k
+/C18/C19
+ð1Þ
+where kc is the cut-off frequency of wide- ﬁeld imaging,
+and kex is the spatial frequency of the excitation pattern.
+With Eq. ( 1), at least in principle, SR-SIM could achieve
+perfect imaging without sidelobe (blue lines in Fig. 1a).
+Inspired by the above, we developed a high- ﬁdelity SIM
+reconstruction algorithm by engineering the equivalent
+PSF of SR-SIM into an ideal form, called “HiFi-SIM”. The
+ﬂowchart of HiFi-SIM is shown in Fig. S1, which contains
+three main steps. In preprocessing, the raw data was
+deconvoluted
+26 using a theoretical OTF. In reconstruction
+parameter estimation, an improved normalized cross-
+correlation method was used to estimate the pattern wave
+vectors. In short, a notch ﬁlter was applied to the nor-
+malized cross-correlation calculation
+8,23, which can
+effectively suppress contributions from low-frequency sig-
+nal and local periodic structures to the cross-correlation
+map, such that the peaks corresponding to the wave vec-
+tors protruded enough to be automatically determined
+from most of raw data, including low SNR data, TIRF-SIM
+data, and even data with obvious periodic structures (Fig.
+S2). Thus, a pre-set mask or hand-correction was not
+required as before. Once the reconstruction parameters
+were correctly determined, the 0- and ±1-order spectrum
+components were separated, shifted, and combined to yield
+a directly combined spectrum ~S
+directly/C0 combinedðkÞ (Eq. (9) in
+Supplementary Note 1), using a method similar to fairSIM.
+After that, HiFi-SIM performs a two-step spectrum opti-
+mization on ~S
+directly/C0 combinedðkÞ.
+The ﬁrst step is to construct an initial optimization
+function ~W1 kðÞ to correct ~HTheoretical kðÞ to be close to
+~Hideal kðÞ , as in Eqs. (20, 21) of Supplementary Note 2. A
+weight function ~g1 kðÞ is used in ~W1 kðÞ to modulate all the
+raised peaks into inverted peaks (Fig. 1b–e) to remove the
+residual background signals. With the initial optimization,
+the abnormal features in ~S
+directly/C0 combinedðkÞ can be well
+corrected, so the typical artifacts and residual background
+can be effectively eliminated (Fig. S3a, b, d, e). Following
+~W
+1 kðÞ optimization, another deconvolution function
+~W2 kðÞ based on ~HTheoretical kðÞ is developed to recover the
+high-frequency signals suppressed by the optimized OTF,
+as in Eqs. (12, 22, 23) of Supplementary Notes 1 and 2.
+Like the challenge of applying OTF attenuation in
+Wiener-SIM (Supplementary Note 1), the modulation of
+~g
+1 kðÞ may impair the ﬁdelity of the initial optimized
+spectrum to some extent, resulting in the loss of some ﬁne
+and weak signals (S3g, h). To this end, another weight
+function ~g2 kðÞ is used in ~W2 kðÞ to actively compensate the
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 2 of 12
+===== PAGE 3 =====
+attenuated regions of the spectrum optimized by ~W1 kðÞ .
+Thus ~W2 kðÞ not only improves the spatial resolution, but
+also recovers the real sample signals lost during ~W1 kðÞ
+optimization (Fig. S3h, i).
+With the two-step spectrum optimization, the equivalent
+OTF displayed features with smooth axial distributions
+at all directions, relative u niform distribution along
+circumference, and a collapse downward at the center, as
+shown in Fig. 1d, e. Therefore, a high- ﬁdelity SR-SIM was
+realized with effectively suppressed artifacts and fully pre-
+served ﬁne structures. Moreover, the two-step spectrum
+optimization overcomes the long-term challenge of OTF
+mismatch for Wiener-SIM-based algorithms (Supplemen-
+t a r yN o t e1 ) ,a ss h o w ni nF i g s .S 4a n dS 5 .T h u s ,at h e o r e t i c a l
+OTF is good enough to generate SR images without
+observable artifacts, hence it is used in HiFi-SIM by default.
+See Supplementary Notes 2 and 3 for a more detailed dis-
+cussion of the principle and im plementation of HiFi-SIM.
+–300 –200 –100 0 100 200 300
+0.0
+0.5
+1.0
+Real image
+ Perfect image
+PSF strength (a.u.)OTF strength (a.u.)
+Spatial resolution (nm)
+ TIRF
+ Theoretical PSF for SIM
+Ideal PSF for SIM
+Sidelobe
+a
+bc d Theoretical HiFi-SIM
+0 2π
+0.0
+0.5
+1.0 –10 –5 0 5 10
+0.0
+1.0
+–10 –5 0 5 10
+0.0
+1.0
+Spatial frequency (μm–1)
+Spatial frequency (μm–1)
+Spatial frequency (μm–1)
+Int. (norm)
+Optical sectioning
+Sidelobe artifacts
+Honeycomb artifacts
+Angle (radian)
+π
+e
+f
+–15 –10 –5 0 5 10 15
+0.0
+0.5
+1.0
+Residual
+background
+ 
+TIRF 
+Theoretical OTF for SIM
+Ideal OTF for SIM
+Downward
+ kink
+Sibelobe
+f
+e
+Abnormal
+features
++
+1
+0
+150 nmSibelobe
+7 μm–1
+1
+0
+Abnormal
+features
+kex
+kc +k
+ex
+k
+c
+–300 –150 0 150 300
+0.0
+0.5
+1.0
+Int. (norm)
+Spatial resolution (nm)
+Sidelobe
+artifacts
+HTIRF (k) = Hdet (k)
+Hldeal (k) = Hdet (
+~
+~
+~~
+~~ ~
+~
+Hdet (k + kex) + Hdet (k) Hdet (k - kex)HTheoretical (k) = mex
+2
+mex
+2
+k)kc
+kc
+kc + kex
+kc + kex
+Fig. 1 Underlying principle of PSF engineering. a Theoretical OTFs and corresponding PSFs for wide- ﬁeld ﬂuorescence microscopy (total internal
+reﬂection ﬂuorescence microscopy, TIRF) and directly combined SR-SIM, and the ideal OTF and corresponding PSF for SR-SIM. The downward kinks in
+the OTF of directly combined SR-SIM result in sidelobes in PSF, while background ﬂuorescence signals located at the upward peaks of the OTF cause
+honeycomb artifacts and limit the OS capability. ~Hdet kðÞ represents the actual OTF for wide- ﬁeld imaging. kc represents the cut-off frequency of wide-
+ﬁeld imaging. mex and kex represent the modulation depth and spatial frequency of the excitation pattern, respectively. b 2D OTF and corresponding
+PSF of directly combined SR-SIM with excitation pattern in only one orientation. c 2D OTF and corresponding PSF of directly combined SR-SIM with
+excitation patterns in three orientations. Green and white circles represent the diffraction limited boundaries of the wide- ﬁeld and SR-SIM,
+respectively; blue spots represent the spatial frequencies of the excitation pattern at different orientations; cyan circles represent the circul ar cross-
+section with a radius equal to the spatial frequency of the excitation patterns. d Equivalent OTF and corresponding PSF after optimizing the directly
+combined OTF by HiFi-SIM. e Intensity proﬁles along the magenta, yellow, and cyan lines in c and d. f Intensity proﬁles along the blue lines in c and
+d. Gamma value: 0.3 for OTFs in b–d
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 3 of 12
+===== PAGE 4 =====
+Fidelity characterization with standard samples
+Three representative structures, including micro-
+spheres, lines, and rings, were employed as standard
+samples to quantitatively characterize the ﬁdelity of HiFi-
+SIM. Fluorescent microspheres of 100 nm diameter were
+imaged by a home-built laser-interference SIM (Fig. S6)
+and reconstructed with the traditional Wiener-SIM we
+implemented, fairSIM, and HiFi-SIM (Fig. 2). Using a
+theoretical OTF (Eq. (14) in Supplementary Note 1:
+“dampening” factor = 1), the spectrum reconstructed by
+traditional Wiener-SIM displayed patchy features (Fig.
+2a), which led to obvious sidelobe artifacts with an
+intensity about 10% of the real microspheres (Fig. 2b).
+With an active compensation for the theoretical OTF
+(“dampening” factor = 0.3)
+27,31, the patchy features
+became weaker but still existed in the spectrum of fair-
+SIM; hence, the SR image showed similar sidelobe arti-
+facts. By contrast, the spectrum reconstructed by HiFi-
+SIM using the same OTF as in traditional Wiener-SIM
+showed homogenous features, yielding clean micro-
+spheres. As shown in Fig. 2b, the sidelobe artifacts may be
+superimposed on the adjacent actual microsphere,
+increasing its strength by about 8.8%. Because the energy
+distribution in the PSF of HiFi-SIM is mainly con-
+centrated in the main lobe (Fig. 1a, f), the average FWHM
+of individual microspheres was slightly increased by about
+6 nm (Fig. 2c), but the detailed features were easier to
+identify due to fewer artifacts.
+The actual OTF of the system could be determined
+from the corresponding wide- ﬁeld images
+32. With the
+measured OTF, the patchy features in the spectrum
+reconstructed by traditional Wiener-SIM, re-Wiener, TV-
+SIM, and Hessian-SIM were reduced but sidelobe artifacts
+with a strength of approximately 3 –5% still existed around
+many microspheres (Fig. S7), indicating an inherent pro-
+blem in the combined spectrum. Instead, HiFi-SIM is not
+sensitive to the OTF used, yielding clean microspheres
+without sidelobe artifacts (Figs. 2a, b and S4c –e). This
+made the results of HiFi-SIM more trustworthy, especially
+for a case when an accurately calibrated OTF is not
+available. As a similar spherical structure in biology,
+caveolae in live U2OS cells were imaged by Nikon N-SIM
+0.0 0.2 0.4 0.6 0.8
+0.0
+0.5
+1.0
+8.8%
+Int. (norm)
+Distance (μm)
+Wide-field  Wiener
+FairSIM HiFi-SIM
+b
+Wiener FairSIM HiFi-SIM
+0
+20
+40
+60
+80
+100Resolution (nm)
+86.2 ± 4.6 82.0 ± 4.0 88.0 ± 3.3
+c
+a 255
+0
+Wiener
+FairSIM
+HiFi-SIM
+2 μm
+0.5 μm
+b
+FairSIMWienerTIRF wide-field
+HiFi-SIM
+Fig. 2 Experimental characterization of the correlation between artifacts and abnormal features of reconstructed spectrum. a SR images of
+100 nm ﬂuorescent microspheres collected from our home-built TIRF-SIM setup were reconstructed using the traditional Wiener-SIM we
+implemented, fairSIM, and HiFi-SIM, and the corresponding reconstructed spectrum is shown on the right. Note that the reconstructed spectrum of
+traditional Wiener-SIM and fairSIM both show obvious patchy features, and the real microspheres in the SR images contain obvious sidelobe artifacts .
+b Magniﬁed images of the red-box region in a, and the line pro ﬁles along the microspheres in b show diminishing sidelobe artifacts in HiFi-SIM.
+c Full-width half-maxima (FWHMs) of the ﬂuorescence proﬁles of 10 microspheres in the reconstruction images of traditional Wiener-SIM, fairSIM, and
+HiFi-SIM
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 4 of 12
+===== PAGE 5 =====
+(Fig. S8a) and reconstructed by NIS-elements using the
+calibrated OTF. The result showed similar snow ﬂake-like
+sidelobe artifacts, which are dif ﬁcult to distinguish from
+some real but weak caveolae (Fig. S8b, e). Utilizing HiFi-
+SIM, the quality and ﬁdelity of SR image of the caveolae
+was considerably improved (Fig. S8c, f).
+Figure 3 shows the results of line and ring structures
+from an Argolight standard sample imaged with GE
+DeltaVision OMX. Arti ﬁcial lines parallel to the real
+structures with an intensity of approximately 10 –30% of
+the actual structures appeared in the SR images obtained
+by GE SoftWoRx using the calibrated OTF and fairSIM
+using a theoretical OTF (Fig. 3a, b). Similar arti ﬁcial
+structures also appeared in the reconstruction results of
+TV-SIM and Hessian-SIM (Fig. S9a, c). With HiFi-SIM,
+these sidelobe structures were effectively eliminated. The
+root mean square error (RMSE) of the error-map to the
+ground-truth (GT) model (Fig. S10) was decreased
+approximately four times by HiFi-SIM than that by fair-
+SIM (Fig. 3c). For the ring structures, artifacts in the
+center are usually more obvious than those on the outside,
+because the sidelobes in the inside overlap (Figs. 3d, e and
+S9b, d). As expected, HiFi-SIM effectively eliminated
+these artifacts, yielding clean hollow rings. The calculated
+structural similarity remained above 91.3% to the GT
+model, even with different reconstruction parameters ( w
+1
+and w2), as shown in Fig. 3f. This suggests that SR images
+by HiFi-SIM are not sensitive to the reconstruction
+parameters. Thus, routine adjustment is not required for
+most cases, which considerably facilitates the application
+of SIM as a daily imaging tool.
+Artifacts suppression by HiFi-SIM for high-quality data
+Successful SIM imaging generally requires structured
+illumination pattern with high modulation depth, which is
+best obtained in TIRF-SIM mode. We imaged micro-
+tubules in live COS-7 cells using TIRF-SIM mode of the
+home-built setup, and the raw data were reconstructed
+with fairSIM and HiFi-SIM (Fig. 4a). High modulation
+depth (greater than 0.5) enabled both algorithms to
+reconstruct high-quality SR images. However, with fair-
+SIM, sidelobe artifacts, with an intensity of approximately
+|SR-GT|
+0.0 0.6 1.2 1.8
+0.0
+0.5
+1.0
+Int. (norm)
+Distance (μm)
+GT          GE | OMX
+FairSIM  HiFi-SIM
+0.0 0.7 1.4 2.1 2.8
+0.0
+0.5
+1.0
+Int. (norm)
+Distance (μm)
+GT GE | OMX
+FairSIM HiFi-SIM
+0.0 0.1 0.2 0.3 0.4 0.5
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0SSIM
+Deconvolution wiener constant
+GE | OMX
+FairSIM
+HiFi-SIM (w1 = 0.9)
+HiFi-SIM (w1 = 1.2)
+a
+d
+b
+e
+c
+f
+RMSE: 10.8051
+SSIM: 0.7941
+RMSE: 2.6033
+SSIM: 0.9612
+HiFi-SIM
+FairSIM
+0
+20
+40
+60
+80
+FairSIM HiFi-SIMGE | OMXGT
+FairSIM HiFi-SIMGE | OMXGT
+1 μm
+0.7 μm
+Wide-field
+HiFi-SIM
+FairSIM
+5 μm
+5 μm
+b
+HiFi-SIM
+FairSIM
+e
+Wide-field
+Fig. 3 Quantitative characterization of the ﬁdelity of HiFi-SIM reconstruction. a “Start” patterns in Argolight slide were imaged by DeltaVision
+OMX with 5 ms exposure. The equivalent wide- ﬁeld image is shown in the upper-left, and the SR images of fairSIM and HiFi-SIM are presented in the
+upper-right and lower-right corners, respectively. b Magniﬁed SR images reconstructed from the magenta-box region in a using GE SoftWoRx,
+fairSIM, and HiFi-SIM. The ground-truth (GT) is shown on left, which is reconstructed by HiFi-SIM from the same region of high-quality data with 50 ms
+exposure. Intensity proﬁles along the magenta line in b conﬁrm that HiFi-SIM eliminates almost all sidelobe artifacts around the real lines. c Error-map
+of the SIM images to the ground-truth model. RMSE and SSIM values are shown in the lower-left corner. d, e Comparison of the SR images for “ring”
+patterns in Argolight slide with 10 ms exposure time, reconstructed by fairSIM, HiFi-SIM, and SoftWoRx. f SSIM plot of reconstructed SR results vs. the
+ground-truth model, with different reconstruction parameters
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 5 of 12
+===== PAGE 6 =====
+10% of the actual microtubules, were present in certain
+regions, and an overlap with two sidelobes from nearby
+microtubules created a structure with doubled intensity,
+which could very likely be interpreted as a real structure
+(Fig. 4b, c). With HiFi-SIM, the abnormal spectrum could
+be effectively corrected, thereby leaving no observable
+sidelobe artifacts (Fig. 4a–c).
+Microtubules in a ﬁxed COS-7 cells were further
+imaged by GE DeltaVision OMX under conventional
+2D-SIM mode (incident beam angle smaller than the
+critical angle of TIRF). The raw data have high modula-
+tion depths (0.62, 0.76, and 0.82 in three orientations) but
+also have a large dynamic range due to the strong back-
+ground at the right upper corner. SR images recon-
+structed by GE SoftWoRx, fairSIM, Richardson-Lucy
+deconvolution (RL)-SIM
+26, TV-SIM, and Hessian-SIM
+contain obvious residual background and sidelobe arti-
+facts, especially the strong background area (Figs. 4d–f
+0.0 0.2 0.4 0.6 0.8 1.0
+0.0
+0.5
+1.0
+Int. (norm)
+Distance (μm)
+Wide-field
+FairSIM
+HiFi-SIM
+a
+b
+d
+e
+f
+Hessian-SIM
+Hessian-SIM
+HiFi-SIM
+HiFi-SIM
+c
+HiFi-SIM
+HiFi-SIM
+GE | OMX | 2D
+0
+85
+170
+225
+TIRF wide-field
+b
+  4 μm
+FairSIM
+f
+e
+  10 μm
+GE | OMX | 2DWide-field
+Wide-field
+  1 μm
+Wide-field
+  1 μm
+GE | OMX | 2D Hessian-SIM
+1 μm
+c
+Fig. 4 Performance of HiFi-SIM on reconstructing raw data with high-quality. a TIRF wide- ﬁeld image of microtubules in live COS-7 cells is
+shown in the left, and the SR images of fairSIM and HiFi-SIM are presented in the middle and right, respectively. Lower-right corner shows
+corresponding reconstructed spectrum. b Magniﬁed images of the white-box region in a. c Intensity pro ﬁles along the red line in b. d Equivalent
+wide-ﬁeld image of microtubules in ﬁxed COS-7 cells is shown in the left triangle, and the SR images were reconstructed using GE SoftWoRx, Hessian-
+SIM, and HiFi-SIM, respectively. e, f Magniﬁed images of the wide- ﬁeld equivalent in the white-box and red-box regions in d are shown in the left, and
+the corresponding SR images were reconstructed by SoftWoRx, Hessian-SIM, and HiFi-SIM, respectively. Here, Hessian-SIM uses the same OTF as used
+in fairSIM (Fig. S11), and uses the built-in notch ﬁlters to suppress pattern artifacts ( a0 = 0.05, v = 1.2)
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 6 of 12
+===== PAGE 7 =====
+and S11). In particular, with TV- and Hessian-denoising,
+the ﬁbers seem to be more continuous, but the sidelobe
+artifacts cannot be eliminated (Figs. 4f, S11c and S12). By
+contrast, HiFi-SIM effectively removed the residual
+background and typical artifacts, yielding SR images with
+higher ﬁdelity and contrast (Figs. 4d–f and S12). Addi-
+tionally, HiFi-SIM was applied to many high-quality
+external datasets. In all tested cases, HiFi-SIM yielded
+SR images with better quality (Fig. S13).
+Reconstruction of suboptimal data by HiFi-SIM
+Generally, suboptimal raw data (modulation depth
+lower than 0.5) is recommended to be treated with
+special care or abandoned due to the higher risk of
+artifacts. To mimic suboptimal SIM imaging, micro-
+tubules in live U2OS cells we re imaged in conventional
+SIM mode (Fig. 5a). Particularly, the modulation depths
+were intentionally adjusted to be different (0.43, 0.36,
+and 0.21 in three orientations) by controlling the beam
+polarization
+16. To reconstruct an acceptable SR image
+with fairSIM, OTF attenuation strength was increased
+to reduce artifacts and residual out-of-focus back-
+ground. This caused the loss of some tiny and weak
+structures, but serious honeycomb and sidelobe arti-
+facts still exist (Fig. 5b–d). In comparison, HiFi-SIM
+reconstructed SR image wi th little honeycomb and
+sidelobe artifacts, and the lost tiny structures were
+preserved (Fig. 5a–g). This demonstrates that HiFi-SIM
+can better balance the trade -off between rejecting out-
+of-focus signal and preserving ﬁne and weak structures
+(Figs. S12 and S14).
+SR images of raw data with a strong background also
+often suffer from hammerstroke artifacts derived from
+non-modulated background or high-frequency noise
+18.
+Further Hessian denoising can effectively suppress the
+hammerstroke artifacts, but may enhance the non-
+continuous segments around the real structures into
+continuous sidelobe artifacts
+10,11 (Figs. S15 and S16). By
+using HiFi-SIM, the reconstructed images have less
+hammerstroke and sidelobe artifacts.
+0.0 0.1 0.2 0.3 0.4 0.5 0.6
+0.0
+0.5
+1.0
+0.0 0.2 0.4 0.6 0.8 1.0
+0.0
+0.5
+1.0
+0.0 0.3 0.6 0.9 1.2
+0.0
+0.1
+0.2
+1.0
+Int. (norm)
+Distance (μm)
+Distance (μm)
+Distance (μm)
+Int. (norm)Int. (norm)
+Wide-field  FairSIM 
+HiFi-SIM 
+f
+e
+g
+c
+b
+d
+FairSIM HiFi-SIM
+0.5 μm
+e
+f
+0.5 μm
+0.5 μm
+g
+255
+170
+85
+0
+Wide-field b
+d
+c
+4 μm
+a
+Fig. 5 Performance of HiFi-SIM on reconstructing raw data with low modulation depth and strong background. a Equivalent wide- ﬁeld
+image of microtubules in live U2OS cells with strong background ﬂuorescence is shown in the left, and the SR images reconstructed using fairSIM
+and HiFi-SIM. Lower-right corner shows corresponding reconstructed spectrum. b–d Magniﬁed images of the red-box, cyan-box, and magenta-box
+regions in a. e–g Intensity pro ﬁles along the red, cyan, and magenta lines in b–d, respectively
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 7 of 12
+===== PAGE 8 =====
+Optical sectioning by HiFi-SIM
+In biological application, there is demand to quickly
+capture 3D cell structures from volume stack of 2D-SIM
+imaging. But it is generally regarded that 2D-SIM lack
+optical sectioning capability due to the missing-cone of
+3D OTF
+1,2,4,39,40. In HiFi-SIM, the two-step spectrum
+optimization reshapes the equivalent OTF to be concave
+downward at the center (Fig. 1d, e). In the corresponding
+3D OTF, the missing cone will partly be ﬁlled so that OS
+capability could be achieved. To demonstrate this,
+microﬁlaments in ﬁxed U2OS cells were imaged by Del-
+taVision OMX. Reconstructed results by HiFi-SIM
+showed higher contrast and fewer artifacts than the
+results by GE SoftWoRx (Fig. S17). Moreover, HiFi-SIM
+has been extended to reconstruct single-layer 3D-SIM
+datasets (Supplementary Note 2), and its reconstruction
+quality was comparable to the quality of the same layer in
+full 3D-SIM reconstruction (Figs. S18 and S19), although
+there is no 2-fold axial resolution improvement.
+We further imaged moving vesicles in live U2OS cells
+using conventional 2D-SIM mode of the home-built
+setup. Membrane proteins were labeled with CD63-EGFP,
+such that each vesicle represents a spherical structure. In
+2D-SIM imaging, these vesicles appear as microspheres or
+hollow rings depending on their size, i.e., whether they are
+smaller or larger than the SIM resolution. However, most
+hollow vesicles reconstructed by fairSIM and Hessian-
+SIM contain serious artifacts and residual defocused
+background both in the center and outside (Fig. 6), similar
+to the 2D-SIM images of the standard rings (Fig. 3d, e).
+Instead, HiFi-SIM can reconstruct vesicles of different
+sizes into microspheres or central hollow rings with
+minimal artifacts, which is consistent with the result of
+full 3D-SIM (Fig. S19).
+Discussion
+We developed a high-ﬁdelity SIM algorithm to reconstruct
+high-quality SR images. Previously, to ensure high-quality
+SR-SIM images, careful experiment design, dedicated system
+O T Fc a l i b r a t i o n ,a n dﬁne-tuning of multiple user-de ﬁned
+parameters were typically required. This set high entry
+barriers for ordinary SIM users. The proposed HiFi-SIM is
+more immune to reconstructi on artifacts related to OTF
+mismatch than most Wiener-S IM-based algorithms (Figs.
+S4 and S5). Thus, a theoretical OTF is used by default in
+HiFi-SIM, avoiding complicated OTF calibration. For high-
+quality data with high modulation depth (greater than 0.5),
+usually only one parameter ( attStrength)n e e d st ob e
+adjusted for optimal OS performance (Fig. S20). For sub-
+optimal data with low modulation depth (between 0.1 and
+0.5) or strong background ﬂuorescence, adjusting only two
+additional parameters (ApoFWHN or β) accordingly usually
+ensures good quality SR images. An easy-to-implement
+guideline is provided in Supplementary Note 3.
+Raw data with low SNR is notoriously dif ﬁcult to
+reconstruct acceptable SR images. In traditional Wiener-
+SIM, the Wiener deconvolution ampli ﬁes the unwanted
+high-frequency noise signal
+8,25 (Supplementary Note 1).
+Hence, random discontinuous artifacts frequently appear
+in SIM images of low SNR raw data. In HiFi-SIM,
+appropriately reducing ApoFWHN can suppress random
+discontinuous artifacts related to high-frequency noise
+(Fig. S21). Intentionally enhancing the low- and medium-
+frequency signals by appropriately increasing β can also
+improve the reconstruction quality of low SNR data (Figs.
+S22 and S23; Supplementary Note 3). Both TV-SIM and
+Hessian-SIM can also suppress the random discontinuous
+artifacts excellently, but they are not able to eliminate the
+sidelobe artifacts and residual background (Figs. 4e, f, S9,
+S11, and S12). Moreover, in some cases, Hessian denois-
+ing may cause discontinuous segments to be enhanced
+into continuous sidelobes (Figs. S15 and S16), which may
+increase the risk of artifacts. For raw data with extremely
+low SNR or thick samples with strong background,
+Hessian-SIM may perform better than HiFi-SIM to
+reduce hammerstroke artifacts. In this case, further Hes-
+sian denoising could be performed on the results of HiFi-
+SIM to yield better SR images.
+Recently, Hoffman et al. developed Tiled-SIM which
+divides the raw data into overlapping tiled subsets and
+reconstructs each subset with independent parameters
+13.
+As HiFi-SIM is not sensitive to reconstruction para-
+meters, this tiled method is not necessary in most cases.
+For raw data with large aberrations or high dynamic range
+in the entire ﬁeld of view, applying HiFi-SIM to recon-
+struct each tiled subset can further improve the quality of
+Tiled-SIM (Fig. S24e, f). Results of HiFi-SIM could be
+used as input to train the neural network for deep-
+learning based methods to improve their ﬁdelity
+28,29. The
+principle of spectrum optimization in HiFi-SIM could also
+be applied to reconstruct images of non-linear SIM 7,12,41
+and lattice light-sheet microscopy 42, which are more
+prone to abnormal spectrum and artifacts. In the future,
+GPU acceleration
+11 could be conducted for HiFi-SIM to
+speed up reconstruction.
+In summary, HiFi-SIM provides an easy-to-use SIM
+reconstruction approach based on PSF engineering,
+yielding high- ﬁdelity SR images from varied quality raw
+data. Compared with other technologies, HiFi-SIM can
+lower the heightened standards for experimental imple-
+mentation and post-processing reconstruction, hence
+improving the accessibility of SR-SIM for ordinary users.
+Materials and methods
+Standard ﬂuorescent sample preparation
+Fluorescent microspheres of 100-nm-diameter and com-
+mercial Argo-SIM slide were employed as standard samples
+to quantitatively evaluate the ﬁdelity of reconstruction
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 8 of 12
+===== PAGE 9 =====
+algorithms. Carboxylate-modi ﬁed microspheres (0.1 µm,
+yellow-green ﬂuorescent 505/515, F8803) were purchased
+from Thermo Fisher Scientiﬁc (MA, USA) and diluted 100
+times before use. Commercially available coverslips
+(~150 μm thick) with 24 × 60 mm (Cellvis, USA) were
+carefully cleaned using the procedure in ref.
+11.As i l i c o n e
+sheet (GBL665201-25EA, Sigma-Aldrich, USA) with a 9-
+mm diameter well was attached to the coverslip. The
+ﬂuorescent solution was dispensed onto the coverslip and
+imaged in PBS buffer. The “Star” and “2D matrix of rings ”
+patterns in Argo-SIM were used as typical “line” and “ring”
+structures.
+Cell culture and labeling
+COS-7 and U2OS cells were obtained from the Cell
+Bank of the Chinese Academy of Sciences (Shanghai,
+China) and cultured in an incubator at 37 °C and 5% CO
+2.
+The COS-7 cells were cultivated in a DMEM medium
+(Thermo Fisher Scienti ﬁc, USA) supplemented with 1%
+penicillin G, streptomycin (Sangon Biotech, China), and
+10% fetal bovine serum (Thermo Fisher Scienti ﬁc, USA).
+The U2OS cells were cultivated in McCoy ’s 5A medium,
+modiﬁed (Thermo Fisher Scienti ﬁc, USA), supplemented
+with 1% penicillin G, streptomycin (Sangon Biotech,
+China), and 10% fetal bovine serum (Thermo Fisher
+Scientiﬁc, USA).
+Cells were transiently transfected using Lipofectamine
+2000 (Thermo Fisher Scienti ﬁc, USA) as per manu-
+facturer’s protocol. The mEmerald-Tubulin-N-18 vector
+(plasmid #54293, Addgene, USA), mEGFP-Lifeact vector
+(plasmid #54610, Addgene, USA), mEmerald-Caveolin
+vector (plasmid #54025, Addgene, USA), and mEmerald-
+ER-3 vector (plasmid #54082, Addgene, USA) were used
+to label the microtubule, micro ﬁlament, caveolae, and
+endoplasmic reticulum, respectively. Cell vesicles were
+labeled by the CD63-EGFP vector, which was con-
+structed by inserting Homo sapiens CD63 cDNAs into
+pEGFP-n1 vector (Clontech, USA). Twenty-four hours
+after transfection, the cells were detached using trypsin-
+EDTA (Thermo Fisher Scienti ﬁc, USA), seeded onto
+FairSIM
+Hessian-SIM
+HiFi-SIM
+b c
+0.0 0.4 0.8 1.2 1.6
+0.0
+0.5
+1.0
+Int. (norm)
+ Distance (um)
+Artifacts
+Defocused signal
+FairSIM Hessian-SIM
+HiFi-SIM
+a FairSIM
+4 μm
+1 μm
+Hessian-SIM HiFi-SIM
+Fig. 6 Imaging of vesicle in live U2OS cells. a Comparison of SR images reconstructed by fairSIM (left), Hessian-SIM (middle), and HiFi-SIM (right).
+b Magniﬁed SR images of vesicles with different sizes using fairSIM (top), Hessian-SIM (middle), and HiFi-SIM (bottom). Note that vesicles with larger
+sizes reconstructed by fairSIM have obvious defocused background artifacts in the center and outside. Further performing the Hessian denoising
+procedure on the results of fairSIM can suppress the artifacts to a certain extent, but cause the center of the vesicles to be blurred. c Intensity proﬁles
+along the red line in b
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 9 of 12
+===== PAGE 10 =====
+poly-L-lysine-coated 35-mm glass-bottom dishes (Cell-
+vis, USA), and cultured in an incubator at 37 °C and 5%
+CO
+2 for an additional 24 h before the experiments.
+For live cell imaging, the complete medium was
+replaced by HBSS solution (Thermo Fisher Scienti ﬁc,
+USA) containing Ca 2+ and Mg 2+ but no phenol red. For
+ﬁxed cell imaging, the complete medium was removed
+and cells were ﬁxed with 4% paraformaldehyde for 10 min
+at room temperature. After ﬁxation, cells were washed
+twice by PBS buffer. Both live and ﬁxed cells were imaged
+in PBS buffer.
+SIM imaging
+SIM experiments were performed using commercial SIM
+microscopes, namely DeltaVision OMX SR (GE Healthcare
+in Issaquah, Washington, USA) and N-SIM S (Nikon
+Corporation, Tokyo, Japan), as well as a custom-built two-
+beam interference SIM microscope (Fig. S6). The custom-
+built SIM was constructed around a commercial inverted
+ﬂuorescence microscope (IX83, Olympus Life Science,
+Japan) with a TIRF-oil-immersion objective (UAPON
+100×, NA = 1.49, Olympus Life Science, Japan). A 488-nm,
+500-mW semiconductor laser (Genesis MX488-500 STM,
+Coherent, USA) was used for excitation, a quad-band total
+internal re ﬂection (TIRF) ﬁlter block (TRF89902-EM,
+Chroma, USA) was employed for imaging, and a sCMOS
+camera (ORCA-Flash 4.0 V2, Hamamatsu, Japan) was used
+as the detector. To generate illumination patterns with
+different periods, a ferroelectric liquid-crystal spatial light
+modulator (SLM, SXGA-3DM, Fourth Dimension Dis-
+plays, UK) was employed as the grating.
+Microspheres with 100 nm diameter, microtubules, and
+microﬁlaments in live COS-7 cells were imaged using the
+custom-built setup in TIRF-SIM mode. Microtubules and
+vesicles in live U2OS cells, and endoplasmic reticulum in
+ﬁxed U2OS cells were imaged in the setup under con-
+ventional SIM mode with incident beam angle smaller than
+the critical angle of TIRF. Reconstruction parameters: for
+microspheres data, emission wavelength ( λ
+em) = 515 nm
+while that for microtubule, micro ﬁlaments, vesicles, and
+endoplasmic reticulum data was 525 nm, and the single
+pixel size of the detector was calibrated to 65 nm/pixel.
+The “2D matrix of rings ” and “Star” patterns in Argo-
+SIM, microtubules in ﬁxed COS-7 cells, and micro ﬁla-
+ments in ﬁxed U2OS cells were imaged on the DeltaVi-
+sion OMX SR with the parameters: NA = 1.42 (oil
+immersed), excitation wavelength ( λ
+ex) = 488 nm, emis-
+sion wavelength ( λem) = 527 nm, and the single pixel size
+of the detector was calibrated to 78.6 nm/pixel. In addi-
+tion, caveolae in live U2OS cells were imaged on the N-
+SIM S with the parameters: NA = 1.49 (oil immersed),
+excitation wavelength ( λ
+ex) = 488 nm, emission wave-
+length ( λem) = 525 nm, and the single pixel size of the
+detector was calibrated to 60 nm/pixel.
+Image reconstruction
+Commercial SIM reconstruction software packages,
+including GE SoftWoRx and Nikon NIS-Elements, and
+open source packages, including fairSIM, SIMToolbox,
+and iterative deconvolution procedures in ref. 8, were used
+for comparative SR image reconstruction. Images labeled
+‘GE | OMX ’ were reconstructed with SoftWoRx, and the
+Wiener constants were 0.005 by default. Images labeled
+‘Nikon | N-SIM | 2D ’ were reconstructed with NIS-
+Elements. Images labeled ‘FairSIM’ and ‘RL-SIM’ were
+reconstructed with the Wiener-SIM and RL-SIM in fair-
+SIM, respectively. The adopted OTFs were theoretical
+approximate OTFs ( ‘dampening’ factor = 0.3), and
+Wiener constants defaulted to 0.1. Images labeled ‘SIM-
+Toolbox | Wiener ’ and ‘Map-SIM’ were reconstructed
+with the Wiener-SIM and Maximum a posteriori prob-
+ability SIM (Map-SIM) in SIMToolbox. Images labeled
+‘re-Wiener’, ‘TV-SIM’, and ‘Hessian-SIM’ were recon-
+structed with the Wiener-SIM, TV and Hessian denoising
+procedures in ref.
+8. As a comparison with HiFi-SIM, we
+have also implemented a traditional Wiener-SIM. In the
+implementation, raw data preprocessing, and recon-
+struction parameter estimation use the same methods as
+in HiFi-SIM, whereas the recombination of spectrum
+components follows the traditional Wiener deconvolution
+procedure (Supplementary Note 1). Images labeled
+‘Wiener’ were reconstructed with the traditional Wiener-
+SIM implemented by us.
+Quantiﬁcation of the ﬁdelity of SR images
+To quantitatively evaluate the ﬁdelity of SR images
+reconstructed by HiFi-SIM, two typical patterns (rings
+and lines) of known real structures in the Argo-SIM slide
+were employed as standard samples for 2D-SIM imaging
+(Figs. 3 and S9). Because structures of the samples were
+known (rings and lines), raw data with high modulation
+and high SNR were collected with the exposure time of
+50 ms, and SR images with minimal artifacts were
+reconstructed thereafter. The residual noise in the SR
+image was eliminated by setting thresholds, and clean SR
+images were obtained as the ground-truth models (Fig.
+S10). Error maps and corresponding RMSE values,
+between the SR and ground-truth images, were displayed
+to evaluate the ﬁdelity of reconstruction algorithms (Fig.
+3c). Furthermore, the structure similarity index measure
+(SSIM) was used to quantitatively evaluate the ﬁdelity of
+SR images, de ﬁned as
+SSIMðI
+SR; IGTÞ¼ ð2μSRμGT þ C1Þð2σSR;GT þ C2Þ
+ðμ2
+SR þ μ2
+GT þ C1Þðσ2
+SR þ σ2
+GT þ C2Þ
+where μSR and μGT are the mean values of images ISR and
+IGT, respectively; σSR and σGT are the standard deviations
+of ISR and IGT, respectively; and σSR,GT is the cross-
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 10 of 12
+===== PAGE 11 =====
+variance between images ISR and IGT. C1 and C2 are used
+to avoid division by a small denominator and set as C1 =
+0.05 and C2 = 0.05.
+To quantitatively analyze the in ﬂuence of Wiener
+constants, the initial optimization wiener constant in
+HiFi-SIM (denoted w
+1) was set to 0.9 and 1.2; the
+deconvolution wiener constants of fairSIM (denoted
+Wiener parameter) and HiFi-SIM (denoted w
+2) were set
+to 0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, and 0.5, respectively.
+SoftWoRx only set a wiener constant of 0.005 for recon-
+struction. Ten different regions of interest (ROIs) (53 × 53
+pixels), containing ring structures, from the SR images
+(Fig. S10b) were selected to calculate the SSIM values
+between ROI images and corresponding ground-truth
+images (Fig. 3f).
+Acknowledgements
+We thank Prof. Dr. Thomas Huser and Dr. Marcel Müller (Bielefeld University) for
+the fruitful discussion on the algorithm. The work was supported by the
+National Key Research and Development Program of China [grant no.
+2017YFC0110100] and the National Natural Science Foundation of China [grant
+no. 61805272].
+Author details
+1Jiangsu Key Laboratory of Medical Optics, CAS Center for Excellence in
+Molecular Cell Science, Suzhou Institute of Biomedical Engineering and
+Technology, Chinese Academy of Sciences, Suzhou, Jiangsu 215163, China.
+2Academy for Engineering and Technology, Fudan University, Shanghai
+200433, China. 3The Center for Microbes, Development and Health, Key
+Laboratory of Molecular Virology and Immunology, Institute Pasteur of
+Shanghai, Chinese Academy of Sciences, Shanghai 200031, China
+Author contributions
+G.W. and S.L. initiated the spectrum optimization idea; G.W. and L.W.
+developed the reconstruction algorithm; G.W. performed the experiments and
+analyzed the data; S.L., X.C, Y.L., and X.J. built the SIM imaging system; Z.S., Y.X.,
+and Y.J. performed sample preparation; H.L. and Y.T. conceived and supervised
+the study; G.W. and H.L. wrote the paper. All the authors participated in the
+discussions and data interpretation.
+Conﬂict of interest
+The authors declare no competing interests.
+Supplementary information The online version contains supplementary
+material available at https://doi.org/10.1038/s41377-021-00513-w.
+Received: 31 July 2020 Revised: 13 March 2021 Accepted: 14 March 2021
+References
+1 . G u s t a f s s o n ,M .G .L .e ta l .T h r e e - d i m ensional resolution doubling in wide-ﬁeld
+ﬂuorescence microscopy by structured illumination.Biophys. J. 94,4 9 5 7–4970
+(2008).
+2. Heintzmann, R. & Huser, T. Super-resolution structured illumination micro-
+scopy. Chem. Rev. 117, 13890–13908 (2017).
+3 . S a h l ,S .J . ,H e l l ,S .W .&J a k o b s ,S .F l u o r e s c e n c en a n o s c o p yi nc e l lb i o l o g y .Nat.
+Rev. Mol. Cell Biol. 18,6 8 5–701 (2017).
+4 . W u ,Y .C .&S h r o f f ,H .F a s t e r ,s h a r p e r ,a n dd e e p e r :s t r u c t u r e di l l u m i n a t i o n
+microscopy for biological imaging.Nat. Methods 15, 1011–1019 (2018).
+5. Kner, P. et al. Super-resolution video microscopy of live cells by structured
+illumination.Nat. Methods 6, 339–342 (2009).
+6. Hirvonen, L. M. et al. Structured illu mination microscopy of a living cell. Eur.
+Biophys. J. 38,8 0 7–812 (2009).
+7. Li, D. et al. Extended-resolution struc tured illumination imaging of endocytic
+and cytoskeletal dynamics.Science 349, aab3500 (2015).
+8. Huang, X. S. et al. Fast, long-term, super-resolution imaging with Hessian
+structured illumination microscopy.Nat. Biotechnol.36,4 5 1–459 (2018).
+9. Guo, Y. T. et al. Visualizing intracellular o rganelle and cytoskeletal interactions
+at nanoscale resolution on millisecond timescales.Cell 175,1 4 3 0–1442 (2018).
+e17.
+10. Dong, D. S. et al. Super-resolution ﬂuorescence-assisted diffraction computa-
+tional tomography reveals the three-dimensional landscape of the cellular
+organelle interactome.Light 9, 11 (2020).
+11. Markwirth, A. et al. Video-rate multi- color structured illumination microscopy
+with simultaneous real-time reconstruction.Nat. Commun. 10,4 3 1 5( 2 0 1 9 ) .
+12. Sahl, S. J. et al. Comment on “Extended-resolution structured illumina-
+tion imaging of endocytic and cytoskeletal dynamics ”. Science 352,5 2 7
+(2016).
+13. Hoffman, D. P. & Betzig, E . Tiled reconstruction improves structured illumina-
+tion microscopy. Preprint atbioRxiv https://doi.org/10.1101/895318
+(2020).
+14. Schaefer, L. H., Schuster, D. & Schaffer, J. Structured illumination microscopy:
+artefact analysis and reduction utilizing a parameter optimization approach.J.
+Microsc. 216,1 6 5–174 (2004).
+15. Pospí šil, J., Fliegel, K. & Klíma, M. Applications of Digital Image Processing XL
+(SPIE, 2017).
+1 6 . Y o u n g ,L .J . ,S t r öhl, F. & Kaminski, C. F. A guide to structured illumination TIRF
+microscopy at high speed with multiple colors.J. Vis. Exp. 111, e53988 (2016).
+17. Ball, G. et al. SIMcheck: a toolbox for s uccessful super-resolution structured
+illumination microscopy.Sci. Rep. 5, 15915 (2015).
+18. Demmerle, J. et al. Strategic and practic al guidelines for successful structured
+illumination microscopy.Nat. Protoc. 12,9 8 8–1010 (2017).
+19. Kraus, F. et al. Quantitative 3D struct ured illumination microscopy of nuclear
+structures.Nat. Protoc. 12,1 0 1 1–1028 (2017).
+20. Wicker, K. et al. Phase optimisation for structured illumination microscopy.Opt.
+Express 21, 2032–2049 (2013).
+21. Wicker, K. Non-iterativ e determination of pattern p hase in structured illumi-
+nation microscopy using auto-correlations in Fourier space. Opt. Express 21,
+24692–24701 (2013).
+22. Zhou, X. et al. Image recombination tra nsform algorithm for superresolution
+structured illumination microscopy.J. Biomed. Opt. 21, 096009 (2016).
+23. Cao, R. Z. et al. Inverse matrix based ph ase estimation algorithm for structured
+illumination microscopy.Biomed. Opt. Express 9,5 0 3 7–5051 (2018).
+24. Sola-Pikabea, J. et al. Fast and robust phase-shift estimation in two-
+dimensional structured illumination microscopy. PLoS ONE 14, e0221254
+(2019).
+2 5 . C h u ,K .Q .e ta l .I m a g er e c o n s t r u c t i o nfor structured-illumination microscopy
+with low signal level. Opt. Express 22,8 6 8 7–8702 (2014).
+2 6 . P e r e z ,V . ,C h a n g ,B .J .&S t e l z e r ,E .H .K .O p t i m a l2 D - S I Mr e c o n s t r u c t i o nb yt w o
+ﬁltering steps with Richardson-Lucy deconvolution.Sci. Rep. 6, 37149 (2016).
+27. Karras, C. et al. Successful optimiz ation of reconstruction parameters in
+structured illumination microscopy– a practical guide. Opt. Commun. 436,
+69–75 (2019).
+28. Jin, L. H. et al. Deep learning enables s tructured illumination microscopy with
+low light levels and enhanced speed. Nat. Commun. 11, 1934 (2020).
+29. Christensen, C. N. et al. ML-SIM: a deep neural network for reconstruction of
+structured illumination microscopy images. Preprint at https://arxiv.org/abs/
+2003.11064(2020).
+30. K řížek, P. et al. SIMToolbox: a MATLAB toolbox for structured illumination
+ﬂuorescence microscopy.Bioinformatics32,3 1 8–320 (2016).
+31. Müller, M. et al. Open-source image reconstruction of super-resolution
+structured illumination microscopy data in ImageJ. Nat. Commun. 7, 10980
+(2016).
+32. Lal, A., Shan, C. Y. & Xi, P. Structured illumination microscopy image recon-
+struction algorithm.IEEE J. Sel. Top. Quantum Electron. 22, 6803414 (2016).
+33. Heintzmann, R. & Cremer, C. G. Optical Biopsies and Microscopic Techniques III
+(SPIE, 1999).
+34. Gustafsson, M. G. L. Surpassing the lateral resolution limit by a factor of two
+using structured illumination microscopy.J. Microsc. 198,8 2–87 (2000).
+35. Luke š, T. et al. Three-dimensional super-resolution structured illumination
+microscopy with maximum a posterio ri probability image estimation. Opt.
+Express 22, 29805–29817 (2014).
+36. O ’Holleran, K. & Shaw, M. Optimized approaches for optical sectioning and
+resolution enhancement in 2D structured illumination microscopy. Biomed.
+Opt. Express 5, 2580–2590 (2014).
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 11 of 12
+===== PAGE 12 =====
+37. Lai-Tim, Y. et al. Jointly super-reso lved and optically sectioned Bayesian
+reconstruction method for structured illumination microscopy.Opt. Express27,
+33251–33267 (2019).
+38. Johnson, K. A. & Hagen, G. M. Artifact-free whole-slide imaging with structured
+illumination microscopy and Bayesian image reconstruction. GigaScience 9,
+giaa035 (2020).
+39. Shabani, H. et al. Optical transfer function engineering for a tunable 3D
+structured illumination microscope.Opt. Lett. 44, 1560–1563 (2019).
+40. Manton, J. D. et al. Concepts for structured illumination microscopy with
+extended axial resolution through mirrored illumination.Biomed. Opt. Express
+11,2 0 9 8–2108 (2020).
+41. Ingerman, E. A., London, R. A. & Gustafsson, M. G. L. Signal, noise and reso-
+lution in linear and nonlinear struc tured-illumination microscopy.J. Microsc.
+273,3 –25 (2019).
+42. Chen, B. C. et al. Lattice light-sheet microscopy: imaging molecules to
+embryos at high spatiotemporal resolution.Science 346, 1257998 (2014).
+Wen et al. Light: Science & Applications           (2021) 10:70 Page 12 of 12

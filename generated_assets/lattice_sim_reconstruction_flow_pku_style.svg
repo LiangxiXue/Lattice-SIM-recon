@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="720" viewBox="0 0 1760 720">
+<rect width="100%" height="100%" fill="white" fill-opacity="0"/>
+<style>text{font-family:"Microsoft YaHei","DengXian","SimHei",Arial,sans-serif;} .h{font-weight:700;fill:#141414}.b{fill:#646A70}.r{fill:#990F1C}</style>
+<line x1="74" y1="88" x2="1685" y2="88" stroke="#ebebeb" stroke-width="2"/>
+<rect x="82" y="42" width="36" height="46" fill="#990F1C"/>
+<text x="138" y="70" font-size="34" class="h">重建流程总览</text>
+<text x="138" y="105" font-size="20" class="b">从五帧采集数据到 SIM 图像与诊断结果</text>
+<line x1="398.0" y1="230.0" x2="487.0" y2="230.0" stroke="#dadde2" stroke-width="4"/>
+<polygon points="487.0,230.0 473.0,222.0 473.0,238.0" fill="#dadde2"/>
+<line x1="793.0" y1="230.0" x2="882.0" y2="230.0" stroke="#dadde2" stroke-width="4"/>
+<polygon points="882.0,230.0 868.0,222.0 868.0,238.0" fill="#dadde2"/>
+<line x1="1188.0" y1="230.0" x2="1277.0" y2="230.0" stroke="#dadde2" stroke-width="4"/>
+<polygon points="1277.0,230.0 1263.0,222.0 1263.0,238.0" fill="#dadde2"/>
+<path d="M1430.0,300.0 L1430.0,372 L470.0,372 L470.0,425.0" fill="none" stroke="#dadde2" stroke-width="4"/>
+<polygon points="470.0,425.0 462.0,411.0 478.0,411.0" fill="#dadde2"/>
+<line x1="623.0" y1="495.0" x2="712.0" y2="495.0" stroke="#dadde2" stroke-width="4"/>
+<polygon points="712.0,495.0 698.0,487.0 698.0,503.0" fill="#dadde2"/>
+<line x1="1018.0" y1="495.0" x2="1107.0" y2="495.0" stroke="#dadde2" stroke-width="4"/>
+<polygon points="1107.0,495.0 1093.0,487.0 1093.0,503.0" fill="#dadde2"/>
+<rect x="86" y="163" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="80" y="155" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="80" y="155" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="102" y="185" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="129" y="206" font-size="18" text-anchor="middle" class="r">01</text>
+<text x="170" y="205" font-size="28" class="h">五帧原始栈</text>
+<circle cx="110" cy="240" r="4" fill="#990F1C"/>
+<text x="126" y="247" font-size="20" class="b">TIFF stack / rawStack</text>
+<circle cx="110" cy="270" r="4" fill="#990F1C"/>
+<text x="126" y="277" font-size="20" class="b">I1-I5 统一为 HxWx5</text>
+<rect x="481" y="163" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="475" y="155" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="475" y="155" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="497" y="185" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="524" y="206" font-size="18" text-anchor="middle" class="r">02</text>
+<text x="565" y="205" font-size="28" class="h">预处理到频域</text>
+<circle cx="505" cy="240" r="4" fill="#990F1C"/>
+<text x="521" y="247" font-size="20" class="b">边缘余弦衰减</text>
+<circle cx="505" cy="270" r="4" fill="#990F1C"/>
+<text x="521" y="277" font-size="20" class="b">RL 去卷积 + FFT</text>
+<rect x="876" y="163" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="870" y="155" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="870" y="155" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="892" y="185" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="919" y="206" font-size="18" text-anchor="middle" class="r">03</text>
+<text x="960" y="205" font-size="28" class="h">Lattice 解调</text>
+<circle cx="900" cy="240" r="4" fill="#990F1C"/>
+<text x="916" y="247" font-size="20" class="b">5x5 相位矩阵</text>
+<circle cx="900" cy="270" r="4" fill="#990F1C"/>
+<text x="916" y="277" font-size="20" class="b">C0, Cs+/-, Ct+/-</text>
+<rect x="1271" y="163" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="1265" y="155" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="1265" y="155" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="1287" y="185" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="1314" y="206" font-size="18" text-anchor="middle" class="r">04</text>
+<text x="1355" y="205" font-size="28" class="h">参数估计</text>
+<circle cx="1295" cy="240" r="4" fill="#990F1C"/>
+<text x="1311" y="247" font-size="20" class="b">搜索 ks/kt、phiS/phiT</text>
+<circle cx="1295" cy="270" r="4" fill="#990F1C"/>
+<text x="1311" y="277" font-size="20" class="b">估计 mS/mT 并保护</text>
+<rect x="311" y="428" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="305" y="420" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="305" y="420" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="327" y="450" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="354" y="471" font-size="18" text-anchor="middle" class="r">05</text>
+<text x="395" y="470" font-size="28" class="h">OTF 建模</text>
+<circle cx="335" cy="505" r="4" fill="#990F1C"/>
+<text x="351" y="512" font-size="20" class="b">理论 OTF x 阻尼</text>
+<circle cx="335" cy="535" r="4" fill="#990F1C"/>
+<text x="351" y="542" font-size="20" class="b">attenuation mask</text>
+<rect x="706" y="428" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="700" y="420" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="700" y="420" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="722" y="450" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="749" y="471" font-size="18" text-anchor="middle" class="r">06</text>
+<text x="790" y="470" font-size="28" class="h">频谱融合</text>
+<circle cx="730" cy="505" r="4" fill="#990F1C"/>
+<text x="746" y="512" font-size="20" class="b">carrier 搬移 + 相位对齐</text>
+<circle cx="730" cy="535" r="4" fill="#990F1C"/>
+<text x="746" y="542" font-size="20" class="b">HiFi-style W1 -&gt; W2</text>
+<rect x="1101" y="428" width="330" height="150" rx="8" fill="black" opacity="0.08"/>
+<rect x="1095" y="420" width="330" height="150" rx="8" fill="white" stroke="#e1e1e1"/>
+<rect x="1095" y="420" width="330" height="14" rx="8" fill="#990F1C"/>
+<rect x="1117" y="450" width="54" height="28" rx="4" fill="#f7e8ea"/>
+<text x="1144" y="471" font-size="18" text-anchor="middle" class="r">07</text>
+<text x="1185" y="470" font-size="28" class="h">结果输出</text>
+<circle cx="1125" cy="505" r="4" fill="#990F1C"/>
+<text x="1141" y="512" font-size="20" class="b">WF / Lattice-SIM</text>
+<circle cx="1125" cy="535" r="4" fill="#990F1C"/>
+<text x="1141" y="542" font-size="20" class="b">result.mat 诊断</text>
+<rect x="180" y="642" width="1400" height="50" rx="6" fill="#f8f8f8" stroke="#e1e1e1"/>
+<text x="220" y="679" font-size="28" font-weight="700" fill="#990F1C">诊断重点</text>
+<text x="370" y="679" font-size="20" fill="#141414">raw/protected modulation  |  carrier residual  |  W1/W2 denominator  |  attenuation masks</text>
+</svg>

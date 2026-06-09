@@ -1,0 +1,6 @@
+name	shift_x_px	shift_y_px	peak_x_px	peak_y_px	centroid_x_px	centroid_y_px
+C0	0	0	0	0	-0.482989	-0.500414
+CsPlus	-99.7379	35.6298	0	0	-33.3377	11.4972
+CsMinus	99.7379	-35.6298	0	0	32.7482	-13.5528
+CtPlus	-34.2536	-100.105	0	0	-13.97	-37.2904
+CtMinus	34.2536	100.105	0	0	12.449	36.0925

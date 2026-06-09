@@ -11,6 +11,28 @@ end
 if params.wiener < 0
     error('LatticeSIM:InvalidWiener', 'Wiener parameter must be non-negative.');
 end
+if ~any(strcmp(char(params.fusionMode), {'single-step', 'hifi-two-step'}))
+    error('LatticeSIM:InvalidFusionMode', ...
+        'fusionMode must be "single-step" or "hifi-two-step".');
+end
+if params.wienerW1 < 0 || params.wienerW2 < 0
+    error('LatticeSIM:InvalidTwoStepWiener', ...
+        'wienerW1 and wienerW2 must be non-negative.');
+end
+if params.hifiDenominatorScaleW1 <= 0 || params.hifiDenominatorScaleW2 <= 0
+    error('LatticeSIM:InvalidTwoStepDenominatorScale', ...
+        'hifiDenominatorScaleW1 and hifiDenominatorScaleW2 must be positive.');
+end
+if params.hifiCenterDenominatorWeight <= 0
+    error('LatticeSIM:InvalidHifiCenterDenominatorWeight', ...
+        'hifiCenterDenominatorWeight must be positive.');
+end
+if params.hifiW1SidebandAttenuationScale <= 0 || ...
+        params.hifiW2CenterAttenuationScale <= 0 || ...
+        params.hifiW2SidebandAttenuationScale <= 0
+    error('LatticeSIM:InvalidHifiAttenuationScale', ...
+        'HiFi-style denominator attenuation scales must be positive.');
+end
 if ~any(strcmp(char(params.preprocessingMode), {'hifi-rl-fft'}))
     error('LatticeSIM:InvalidPreprocessingMode', ...
         'Preprocessing mode must be "hifi-rl-fft".');

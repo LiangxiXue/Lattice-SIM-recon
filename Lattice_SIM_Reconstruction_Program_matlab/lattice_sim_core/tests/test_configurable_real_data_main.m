@@ -24,6 +24,16 @@ assert(contains(sourceText, 'params.enableLatticeParameterEstimation = true'), .
     'Lattice parameter estimation must stay enabled for this entrypoint.');
 assert(contains(sourceText, 'params.carrierSearchMode = "unconstrained"'), ...
     'Carrier search must stay unconstrained for this entrypoint.');
+assert(contains(sourceText, 'params.fusionMode = "hifi-two-step"'), ...
+    'The real-data entrypoint should select the HiFi-style two-step fusion mode.');
+assert(contains(sourceText, 'params.wienerW1 = 0.15'), ...
+    'The real-data entrypoint should expose the W1 Wiener constant.');
+assert(contains(sourceText, 'params.wienerW2 = 0.06'), ...
+    'The real-data entrypoint should expose the W2 Wiener constant.');
+assert(contains(sourceText, 'params.hifiDenominatorScaleW1 = 1.2'), ...
+    'The real-data entrypoint should expose the W1 denominator scale.');
+assert(contains(sourceText, 'params.hifiDenominatorScaleW2 = 0.8'), ...
+    'The real-data entrypoint should expose the W2 denominator scale.');
 assert(contains(sourceText, 'uigetfile'), ...
     'The real-data entrypoint should use uigetfile to select a five-frame stack.');
 assert(contains(sourceText, 'exist(stackPath, ''file'') ~= 2'), ...
@@ -75,6 +85,11 @@ assert(isequal(size(config.params.phaseMatrix), [5, 5]));
 assert(strcmp(char(config.params.preprocessingMode), 'hifi-rl-fft'));
 assert(strcmp(char(config.params.carrierSearchMode), 'unconstrained'));
 assert(config.params.enableLatticeParameterEstimation == true);
+assert(strcmp(char(config.params.fusionMode), 'hifi-two-step'));
+assert(config.params.wienerW1 == 0.15);
+assert(config.params.wienerW2 == 0.06);
+assert(config.params.hifiDenominatorScaleW1 == 1.2);
+assert(config.params.hifiDenominatorScaleW2 == 0.8);
 assert(config.params.normalizeFrames == true);
 assert(strcmp(config.outputDir, outputDir));
 end

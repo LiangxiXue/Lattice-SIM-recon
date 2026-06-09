@@ -1,0 +1,13 @@
+fusionMode	hifi-two-step
+wienerW1	0.15
+wienerW2	0.06
+apodizationRadius	0.75
+hifiDenominatorScaleW1	1.2
+hifiDenominatorScaleW2	0.8
+expandedToCenterRms	0.211343
+sidebandMeanToCenterRms	0.2355
+sidebandMinToCenterRms	0.230694
+sidebandBalance	0.979593
+totalEnergyRatioToInput	0.288542
+hifiMaskPixels	304051
+hifiOtfNonzeroPixels	304051

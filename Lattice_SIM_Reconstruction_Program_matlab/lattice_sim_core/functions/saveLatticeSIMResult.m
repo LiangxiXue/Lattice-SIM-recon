@@ -15,8 +15,8 @@ end
 
 wfPath = fullfile(outputDir, 'Wide-field.tif');
 simPath = fullfile(outputDir, 'Lattice-SIM.tif');
-imwrite(toUnitImage(result.WF), wfPath, 'tif');
-imwrite(toUnitImage(result.SIM), simPath, 'tif');
+imwrite(toUint16Image(result.WF), wfPath, 'tif');
+imwrite(toUint16Image(result.SIM), simPath, 'tif');
 
 resultMatPath = fullfile(diagnosticsDir, 'result.mat');
 save(resultMatPath, 'result', '-v7.3');
@@ -27,11 +27,12 @@ saved.diagnosticsDir = diagnosticsDir;
 saved.resultMatPath = resultMatPath;
 end
 
-function image = toUnitImage(image)
+function image = toUint16Image(image)
 image = double(image);
 image = image - min(image(:));
 maxValue = max(image(:));
 if maxValue > 0
     image = image ./ maxValue;
 end
+image = uint16(round(image .* double(intmax('uint16'))));
 end
